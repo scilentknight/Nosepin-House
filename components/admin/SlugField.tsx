@@ -12,7 +12,13 @@ interface SlugFieldProps {
   label?: string;
 }
 
-export function SlugField({ value, onChange, sourceValue, prefix, label = "Slug" }: SlugFieldProps) {
+export function SlugField({
+  value,
+  onChange,
+  sourceValue,
+  prefix,
+  label = "Slug",
+}: SlugFieldProps) {
   const [touched, setTouched] = useState(false);
   const lastAutoValue = useRef("");
 
@@ -34,7 +40,12 @@ export function SlugField({ value, onChange, sourceValue, prefix, label = "Slug"
           onChange(slugify(e.target.value));
         }}
       />
-      {prefix && value && <p className="text-xs text-gray-400">{prefix}{value}</p>}
+      {prefix && value && (
+        <p className="text-xs text-gray-400">
+          {prefix}
+          {value}
+        </p>
+      )}
     </div>
   );
 }

@@ -42,7 +42,10 @@ export default function ProductTrashPage() {
     if (!permanentTarget) return;
     setIsBusy(true);
     setError(null);
-    const res = await fetch(`/api/admin/products/${permanentTarget}/permanent`, { method: "DELETE" });
+    const res = await fetch(
+      `/api/admin/products/${permanentTarget}/permanent`,
+      { method: "DELETE" },
+    );
     const json = await res.json();
     setIsBusy(false);
     setPermanentTarget(null);
@@ -56,8 +59,13 @@ export default function ProductTrashPage() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Trashed Products</h1>
-        <Link href="/admin/products" className="text-sm font-medium text-slate-600 hover:text-slate-800">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Trashed Products
+        </h1>
+        <Link
+          href="/admin/products"
+          className="text-sm font-medium text-slate-600 hover:text-slate-800"
+        >
           Back to products
         </Link>
       </div>
@@ -68,20 +76,37 @@ export default function ProductTrashPage() {
         {isLoading ? (
           <p className="p-8 text-center text-sm text-gray-500">Loading...</p>
         ) : products.length === 0 ? (
-          <p className="p-8 text-center text-sm text-gray-500">No trashed products.</p>
+          <p className="p-8 text-center text-sm text-gray-500">
+            No trashed products.
+          </p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {products.map((p) => (
-              <li key={p.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <li
+                key={p.id}
+                className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900">{p.name}</p>
+                  <p className="truncate text-sm font-medium text-gray-900">
+                    {p.name}
+                  </p>
                   <p className="truncate text-xs text-gray-400">{p.sku}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="adminOutline" disabled={isBusy} onClick={() => restore(p.id)}>
+                  <Button
+                    size="sm"
+                    variant="adminOutline"
+                    disabled={isBusy}
+                    onClick={() => restore(p.id)}
+                  >
                     Restore
                   </Button>
-                  <Button size="sm" variant="danger" disabled={isBusy} onClick={() => setPermanentTarget(p.id)}>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={isBusy}
+                    onClick={() => setPermanentTarget(p.id)}
+                  >
                     Delete permanently
                   </Button>
                 </div>

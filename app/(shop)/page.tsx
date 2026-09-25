@@ -247,13 +247,13 @@ export default async function HomePage() {
               </p>
               <div className="mt-8 flex justify-center gap-3 lg:justify-start">
                 <Link
-                  href="/shop"
+                  href="/jewellery"
                   className="rounded-full bg-secondary-500 px-7 py-3.5 text-sm font-semibold text-white shadow-soft transition-all hover:bg-secondary-600 hover:shadow-soft-lg"
                 >
                   Shop Now
                 </Link>
                 <Link
-                  href="/shop"
+                  href="/jewellery"
                   className="rounded-full border border-white/30 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
                 >
                   Explore Jewellery
@@ -267,7 +267,7 @@ export default async function HomePage() {
       <CategoryBrandGrid
         title="Jewellery Categories"
         items={categories}
-        hrefFor={(slug) => `/shop?category=${slug}`}
+        hrefFor={(slug) => `/jewellery?category=${slug}`}
       />
 
       <BestSellers products={products} />
