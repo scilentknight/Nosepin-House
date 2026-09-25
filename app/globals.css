@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #fbf6ee;
+  --foreground: #2f211d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* NOSEPIN Luxury Jewellery Palette */
+
+  /* Primary — Deep Brown */
+  --color-primary-50: #f7efec;
+  --color-primary-100: #eadbd6;
+  --color-primary-200: #d5bbb3;
+  --color-primary-300: #bd968b;
+  --color-primary-400: #a66f62;
+  --color-primary-500: #783f35;
+  --color-primary-600: #69362e;
+  --color-primary-700: #592d27;
+  --color-primary-800: #48241f;
+  --color-primary-900: #381c19;
+  --color-primary-950: #24120f;
+
+  /* Secondary — Gold */
+  --color-secondary-50: #fbf8ed;
+  --color-secondary-100: #f3e9c8;
+  --color-secondary-200: #e7d49a;
+  --color-secondary-300: #d8ba65;
+  --color-secondary-400: #c8a043;
+  --color-secondary-500: #ba8b30;
+  --color-secondary-600: #a07825;
+  --color-secondary-700: #82601e;
+  --color-secondary-800: #654a18;
+  --color-secondary-900: #493511;
+  --color-secondary-950: #2d210a;
+
+  /* Accent — Antique Gold */
+  --color-accent-50: #faf7e8;
+  --color-accent-100: #f1e9bf;
+  --color-accent-200: #e2d38b;
+  --color-accent-300: #cdbb57;
+  --color-accent-400: #ad9b22;
+  --color-accent-500: #937902;
+  --color-accent-600: #7d6602;
+  --color-accent-700: #655200;
+  --color-accent-800: #4d3e00;
+  --color-accent-900: #352b00;
+  --color-accent-950: #211b00;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .shadow-soft {
+    box-shadow:
+      0 1px 2px rgba(120, 63, 53, 0.04),
+      0 8px 24px -8px rgba(120, 63, 53, 0.12);
+  }
+
+  .shadow-soft-lg {
+    box-shadow:
+      0 2px 4px rgba(120, 63, 53, 0.06),
+      0 16px 32px -12px rgba(120, 63, 53, 0.18);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+/* Temporarily hide Next.js development indicator */
+[data-next-badge-root] {
+  display: none !important;
+}

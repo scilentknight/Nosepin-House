@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `product` ADD COLUMN `isFlash` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `isSpecial` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `isWeekly` BOOLEAN NOT NULL DEFAULT false;
+
