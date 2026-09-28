@@ -2,13 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { ok, fail, handleApiError } from "@/lib/api";
 import { recalculateAffectedProducts } from "@/lib/jewellery/recalculate-products";
-import { getAllDerivedPurityRatesForMaterial } from "@/lib/jewellery/rate-calculator";
-
-function startOfDay(date = new Date()) {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
+import { getAllDerivedPurityRatesForMaterial, parseDateOnly } from "@/lib/jewellery/rate-calculator";
 
 export async function GET(request: Request) {
   try {
@@ -19,7 +13,7 @@ export async function GET(request: Request) {
     const dateParam = searchParams.get("date");
     const materialId = searchParams.get("materialId");
 
-    const targetDate = dateParam ? startOfDay(new Date(dateParam)) : startOfDay();
+    const targetDate = parseDateOnly(dateParam);
 
     if (!history) {
       // Return materials with their active base rates and derived purity rates
@@ -99,7 +93,7 @@ export async function POST(request: Request) {
     const rate = Number(body.rate);
     const notes = body.notes?.trim() || null;
     const status = body.status === "INACTIVE" ? "INACTIVE" : "ACTIVE";
-    const dateInput = body.rateDate ? new Date(body.rateDate) : new Date();
+    const rateDate = parseDateOnly(body.rateDate);
 
     if (!materialId) {
       return fail(400, "Material is required");
@@ -130,8 +124,6 @@ export async function POST(request: Request) {
     if (!purity || purity.materialId !== materialId) {
       return fail(400, "Invalid base purity for this material");
     }
-
-    const rateDate = startOfDay(dateInput);
 
     // Ensure any existing base rate flag for this material on this date is updated
     await prisma.materialRate.updateMany({

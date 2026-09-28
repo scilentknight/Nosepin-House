@@ -344,19 +344,21 @@ function toPayload(values: ProductFormValues) {
 
     markupValue: num(values.markupValue),
 
-    materials: values.materials.map((material, index) => ({
-      materialId: material.materialId,
+    materials: values.materials
+      .filter((m) => m.materialId.trim() !== "" && m.purityId.trim() !== "")
+      .map((material, index) => ({
+        materialId: material.materialId,
 
-      purityId: material.purityId,
+        purityId: material.purityId,
 
-      quantity: Number(material.quantity),
+        quantity: Number(material.quantity || 0),
 
-      unit: material.unit,
+        unit: material.unit,
 
-      wastagePercent: Number(material.wastagePercent || 0),
+        wastagePercent: Number(material.wastagePercent || 0),
 
-      sortOrder: index,
-    })),
+        sortOrder: index,
+      })),
 
     images: values.images.map((img, index) => ({
       url: img.url,

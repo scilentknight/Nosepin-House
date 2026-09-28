@@ -66,14 +66,34 @@ export function derivePurityRate(
 }
 
 /**
+ * Parses and normalizes date-only input into UTC midnight Date to avoid timezone shifts.
+ */
+export function parseDateOnly(dateInput?: string | Date | null): Date {
+  if (!dateInput) {
+    const d = new Date();
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  }
+  if (typeof dateInput === "string") {
+    const dateStr = dateInput.split("T")[0];
+    const parts = dateStr.split("-").map(Number);
+    if (parts.length === 3 && !parts.some(isNaN)) {
+      return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    }
+  }
+  const d = new Date(dateInput);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+/**
  * Gets the latest active base rate record for a material on or before targetDate.
  */
 export async function getMaterialBaseRate(
   materialId: string,
-  targetDate: Date = new Date(),
+  targetDate: Date | string = new Date(),
 ) {
-  const endOfTargetDate = new Date(targetDate);
-  endOfTargetDate.setHours(23, 59, 59, 999);
+  const normalizedTargetDate = parseDateOnly(targetDate);
+  const endOfTargetDate = new Date(normalizedTargetDate);
+  endOfTargetDate.setUTCHours(23, 59, 59, 999);
 
   // First check if there is an explicit record flagged as isBaseRate
   let baseRateRecord = await prisma.materialRate.findFirst({

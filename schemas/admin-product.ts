@@ -19,14 +19,14 @@ export const productSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   slug: z.string().max(220).optional(),
   sku: z.string().max(80).nullable().optional(),
-  categoryId: z.coerce.number().int({ message: "Category is required" }),
+  categoryId: z.coerce.number().int({ message: "Category is required" }).positive({ message: "Category is required" }),
   brandId: z.coerce.number().int().nullable().optional(),
 
   shortDescription: z.string().max(2000).nullable().optional(),
   fullDescription: z.string().min(1, "Description is required"),
 
   costPrice: z.number().nonnegative().nullable().optional(),
-  price: z.number().nonnegative("Price must be positive").optional(),
+  price: z.number().nonnegative("Price must be positive").nullable().optional(),
   compareAtPrice: z.number().nonnegative().nullable().optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).nullable().optional(),
   discountValue: z.number().nonnegative().nullable().optional(),
