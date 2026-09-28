@@ -51,8 +51,12 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/categories?tree=true").then((res) => res.json()).then((json) => setCategories(json.data?.categories ?? []));
-    fetch("/api/admin/brands?pageSize=100").then((res) => res.json()).then((json) => setBrands(json.data?.brands ?? []));
+    fetch("/api/admin/categories?tree=true")
+      .then((res) => res.json())
+      .then((json) => setCategories(json.data?.categories ?? []));
+    fetch("/api/admin/brands?pageSize=100")
+      .then((res) => res.json())
+      .then((json) => setBrands(json.data?.brands ?? []));
   }, []);
 
   const load = useCallback(() => {
@@ -125,42 +129,101 @@ export default function ProductsPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Products</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your product catalog.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Products
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage your product catalog.
+          </p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/products/trash">
-            <Button variant="adminOutline" size="sm">Trash</Button>
+            <Button variant="adminOutline" size="sm">
+              Trash
+            </Button>
           </Link>
           <Link href="/admin/products/new">
-            <Button variant="admin" size="sm">New Product</Button>
+            <Button variant="admin" size="sm">
+              New Product
+            </Button>
           </Link>
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search by name or SKU..." className="w-full sm:w-64" />
-        <select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }} className={selectClass}>
+        <SearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder="Search by name or SKU..."
+          className="w-full sm:w-64"
+        />
+        <select
+          value={categoryId}
+          onChange={(e) => {
+            setCategoryId(e.target.value);
+            setPage(1);
+          }}
+          className={selectClass}
+        >
           <option value="">All categories</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </select>
-        <select value={brandId} onChange={(e) => { setBrandId(e.target.value); setPage(1); }} className={selectClass}>
+        <select
+          value={brandId}
+          onChange={(e) => {
+            setBrandId(e.target.value);
+            setPage(1);
+          }}
+          className={selectClass}
+        >
           <option value="">All brands</option>
-          {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          {brands.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
         </select>
-        <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectClass}>
+        <select
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          className={selectClass}
+        >
           <option value="">All statuses</option>
           <option value="DRAFT">Draft</option>
           <option value="PUBLISHED">Published</option>
           <option value="ARCHIVED">Archived</option>
         </select>
-        <select value={stockStatus} onChange={(e) => { setStockStatus(e.target.value); setPage(1); }} className={selectClass}>
+        <select
+          value={stockStatus}
+          onChange={(e) => {
+            setStockStatus(e.target.value);
+            setPage(1);
+          }}
+          className={selectClass}
+        >
           <option value="">All stock</option>
           <option value="IN_STOCK">In stock</option>
           <option value="OUT_OF_STOCK">Out of stock</option>
           <option value="ON_BACKORDER">On backorder</option>
         </select>
-        <select value={featured} onChange={(e) => { setFeatured(e.target.value); setPage(1); }} className={selectClass}>
+        <select
+          value={featured}
+          onChange={(e) => {
+            setFeatured(e.target.value);
+            setPage(1);
+          }}
+          className={selectClass}
+        >
           <option value="">Featured & non-featured</option>
           <option value="true">Featured only</option>
         </select>
@@ -187,7 +250,9 @@ export default function ProductsPage() {
         {isLoading ? (
           <p className="p-8 text-center text-sm text-gray-500">Loading...</p>
         ) : rows.length === 0 ? (
-          <p className="p-8 text-center text-sm text-gray-500">No products found.</p>
+          <p className="p-8 text-center text-sm text-gray-500">
+            No products found.
+          </p>
         ) : (
           <>
             <div className="hidden overflow-x-auto md:block">
@@ -201,33 +266,58 @@ export default function ProductsPage() {
                     <th className="px-4 py-3">Price</th>
                     <th className="px-4 py-3">Stock</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3"></th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {rows.map((p) => (
                     <tr key={p.id}>
                       <td className="px-4 py-3">
-                        <input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="h-4 w-4 rounded border-gray-300" />
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(p.id)}
+                          onChange={() => toggleSelect(p.id)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
                       </td>
                       <td className="px-4 py-3">
-                        <Link href={`/admin/products/${p.id}`} className="flex items-center gap-3 font-medium text-gray-900 hover:text-slate-600">
+                        <Link
+                          href={`/admin/products/${p.id}`}
+                          className="flex items-center gap-3 font-medium text-gray-900 hover:text-slate-600"
+                        >
                           {p.images[0]?.url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.images[0].url} alt="" className="h-9 w-9 rounded-lg object-cover" />
+                            <img
+                              src={p.images[0].url}
+                              alt=""
+                              className="h-9 w-9 rounded-lg object-cover"
+                            />
                           )}
                           <span>
                             {p.name}
-                            {p.isFeatured && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Featured</span>}
-                            {p._count.variants > 0 && <span className="ml-2 text-xs font-normal text-gray-400">{p._count.variants} variants</span>}
+                            {p.isFeatured && (
+                              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                                Featured
+                              </span>
+                            )}
+                            {p._count.variants > 0 && (
+                              <span className="ml-2 text-xs font-normal text-gray-400">
+                                {p._count.variants} variants
+                              </span>
+                            )}
                           </span>
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-500">{p.sku}</td>
-                      <td className="px-4 py-3 text-gray-500">{p.category?.name}</td>
-                      <td className="px-4 py-3 text-gray-700">Rs {p.price.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {p.category?.name}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">
+                        Rs {p.price.toLocaleString()}
+                      </td>
                       <td className="px-4 py-3 text-gray-500">{p.stock}</td>
-                      <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={p.status} />
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Link
@@ -266,23 +356,56 @@ export default function ProductsPage() {
             <ul className="divide-y divide-gray-100 md:hidden">
               {rows.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 px-4 py-3">
-                  <input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="h-4 w-4 shrink-0 rounded border-gray-300" />
-                  <Link href={`/admin/products/${p.id}`} className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{p.name}</Link>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(p.id)}
+                    onChange={() => toggleSelect(p.id)}
+                    className="h-4 w-4 shrink-0 rounded border-gray-300"
+                  />
+                  <Link
+                    href={`/admin/products/${p.id}`}
+                    className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900"
+                  >
+                    {p.name}
+                  </Link>
                   <StatusBadge status={p.status} />
-                  <Link href={`/admin/products/${p.id}`} title="Edit" aria-label="Edit" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100">
+                  <Link
+                    href={`/admin/products/${p.id}`}
+                    title="Edit"
+                    aria-label="Edit"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+                  >
                     <Pencil className="h-4 w-4" />
                   </Link>
-                  <button type="button" onClick={() => handleDuplicate(p.id)} title="Duplicate" aria-label="Duplicate" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicate(p.id)}
+                    title="Duplicate"
+                    aria-label="Duplicate"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+                  >
                     <Copy className="h-4 w-4" />
                   </button>
-                  <button type="button" onClick={() => setDeleteTarget(p.id)} title="Move to trash" aria-label="Move to trash" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 hover:bg-red-50">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(p.id)}
+                    title="Move to trash"
+                    aria-label="Move to trash"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </li>
               ))}
             </ul>
             <div className="px-2">
-              <Pagination page={page} totalPages={totalPages} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+              />
             </div>
           </>
         )}

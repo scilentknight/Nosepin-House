@@ -136,7 +136,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
           <div
             className="prose prose-sm mt-4 max-w-none text-gray-600 prose-headings:text-gray-900 prose-a:text-primary-600"
-            dangerouslySetInnerHTML={{ __html: product.fullDescription }}
+            dangerouslySetInnerHTML={{ __html: product.fullDescription ?? "" }}
           />
 
           <div className="mt-6">

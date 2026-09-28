@@ -6,6 +6,15 @@ const imageInputSchema = z.object({
   sortOrder: z.number().int().default(0),
 });
 
+const productMaterialInputSchema = z.object({
+  materialId: z.string().min(1, "Material is required"),
+  purityId: z.string().min(1, "Purity is required"),
+  quantity: z.number().positive("Quantity must be greater than 0"),
+  unit: z.enum(["GRAM", "KILOGRAM", "CARAT", "PIECE", "MILLIGRAM", "MILLILITER"]),
+  wastagePercent: z.number().nonnegative("Wastage percentage cannot be negative").default(0),
+  sortOrder: z.number().int().default(0),
+});
+
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   slug: z.string().max(220).optional(),
@@ -17,7 +26,7 @@ export const productSchema = z.object({
   fullDescription: z.string().min(1, "Description is required"),
 
   costPrice: z.number().nonnegative().nullable().optional(),
-  price: z.number().nonnegative("Price must be positive"),
+  price: z.number().nonnegative("Price must be positive").optional(),
   compareAtPrice: z.number().nonnegative().nullable().optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).nullable().optional(),
   discountValue: z.number().nonnegative().nullable().optional(),
@@ -60,6 +69,13 @@ export const productSchema = z.object({
   relatedIds: z.array(z.coerce.number().int()).default([]),
   crossSellIds: z.array(z.coerce.number().int()).default([]),
   upSellIds: z.array(z.coerce.number().int()).default([]),
+
+  materials: z.array(productMaterialInputSchema).default([]),
+  labourCharge: z.number().nonnegative("Labour charge cannot be negative").default(0),
+  makingCharge: z.number().nonnegative("Making charge cannot be negative").default(0),
+  otherCharge: z.number().nonnegative("Other charge cannot be negative").default(0),
+  markupType: z.enum(["PERCENTAGE", "FIXED"]).nullable().optional(),
+  markupValue: z.number().nonnegative("Markup value cannot be negative").nullable().optional(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

@@ -1,34 +1,159 @@
+// "use client";
+
+// import { Input } from "@/components/ui/Input";
+// import type { ProductFormValues } from "@/components/admin/products/ProductForm";
+
+// interface TabProps {
+//   values: ProductFormValues;
+//   set: <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => void;
+// }
+
+// export function PricingTab({ values, set }: TabProps) {
+//   return (
+//     <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-soft sm:grid-cols-2 lg:grid-cols-3">
+//       <Input label="Cost price" type="number" step="0.01" value={values.costPrice} onChange={(e) => set("costPrice", e.target.value)} />
+//       <Input label="Selling price" type="number" step="0.01" value={values.price} onChange={(e) => set("price", e.target.value)} required />
+//       <Input label="Compare-at price" type="number" step="0.01" value={values.compareAtPrice} onChange={(e) => set("compareAtPrice", e.target.value)} />
+
+//       <div className="flex flex-col gap-1.5">
+//         <label className="text-sm font-medium text-gray-700">Discount type</label>
+//         <select
+//           value={values.discountType}
+//           onChange={(e) => set("discountType", e.target.value as ProductFormValues["discountType"])}
+//           className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+//         >
+//           <option value="">None</option>
+//           <option value="PERCENTAGE">Percentage</option>
+//           <option value="FIXED">Fixed amount</option>
+//         </select>
+//       </div>
+//       <Input label="Discount value" type="number" step="0.01" value={values.discountValue} onChange={(e) => set("discountValue", e.target.value)} />
+//       <Input label="Tax class" value={values.taxClass} onChange={(e) => set("taxClass", e.target.value)} placeholder="e.g. Standard, Exempt" />
+//     </div>
+//   );
+// }
+
+// new
+
 "use client";
 
-import { Input } from "@/components/ui/Input";
-import type { ProductFormValues } from "@/components/admin/products/ProductForm";
+import { useEffect, useState } from "react";
 
-interface TabProps {
+import type { ProductFormValues } from "../ProductForm";
+
+import type { JewelleryPricing } from "@/lib/jewellery/types";
+
+import { JewelleryPricingSummary } from "../JewelleryPricingSummary";
+
+interface Props {
   values: ProductFormValues;
-  set: <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => void;
+
+  set: <K extends keyof ProductFormValues>(
+    key: K,
+    value: ProductFormValues[K],
+  ) => void;
 }
 
-export function PricingTab({ values, set }: TabProps) {
-  return (
-    <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-soft sm:grid-cols-2 lg:grid-cols-3">
-      <Input label="Cost price" type="number" step="0.01" value={values.costPrice} onChange={(e) => set("costPrice", e.target.value)} />
-      <Input label="Selling price" type="number" step="0.01" value={values.price} onChange={(e) => set("price", e.target.value)} required />
-      <Input label="Compare-at price" type="number" step="0.01" value={values.compareAtPrice} onChange={(e) => set("compareAtPrice", e.target.value)} />
+export function PricingTab({ values, set }: Props) {
+  const [pricing, setPricing] = useState<JewelleryPricing | null>(null);
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-700">Discount type</label>
-        <select
-          value={values.discountType}
-          onChange={(e) => set("discountType", e.target.value as ProductFormValues["discountType"])}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-        >
-          <option value="">None</option>
-          <option value="PERCENTAGE">Percentage</option>
-          <option value="FIXED">Fixed amount</option>
-        </select>
-      </div>
-      <Input label="Discount value" type="number" step="0.01" value={values.discountValue} onChange={(e) => set("discountValue", e.target.value)} />
-      <Input label="Tax class" value={values.taxClass} onChange={(e) => set("taxClass", e.target.value)} placeholder="e.g. Standard, Exempt" />
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    /*
+     * Do not calculate if there are no
+     * materials yet.
+     */
+    if (values.materials.length === 0) {
+      setPricing(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function calculate() {
+      try {
+        setLoading(true);
+
+        const response = await fetch("/api/admin/products/pricing", {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            materials: values.materials.map((material) => ({
+              materialId: material.materialId,
+
+              purityId: material.purityId,
+
+              quantity: Number(material.quantity || 0),
+
+              wastagePercent: Number(material.wastagePercent || 0),
+            })),
+
+            labourCharge: Number(values.labourCharge || 0),
+
+            makingCharge: Number(values.makingCharge || 0),
+
+            otherCharge: Number(values.otherCharge || 0),
+
+            markupType: values.markupType,
+
+            markupValue: Number(values.markupValue || 0),
+          }),
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const json = await response.json();
+
+        if (!cancelled) {
+          setPricing(json.data ?? null);
+        }
+      } catch (error) {
+        console.error("Pricing calculation failed:", error);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    calculate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    values.materials,
+    values.labourCharge,
+    values.makingCharge,
+    values.otherCharge,
+    values.markupType,
+    values.markupValue,
+  ]);
+
+  return (
+    <div className="space-y-6">
+      {loading && (
+        <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-500">
+          Recalculating current price...
+        </div>
+      )}
+
+      <JewelleryPricingSummary
+        pricing={pricing}
+        labourCharge={values.labourCharge}
+        makingCharge={values.makingCharge}
+        otherCharge={values.otherCharge}
+        markupType={values.markupType}
+        markupValue={values.markupValue}
+        set={set}
+      />
     </div>
   );
 }

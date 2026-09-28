@@ -44,8 +44,7 @@ export default function EditCategoryPage() {
       body: JSON.stringify(values),
     });
     const json = await res.json();
-    if (!res.ok) return { ok: false, message: json.message };
-    return { ok: true };
+    if (!res.ok) throw new Error(json.message ?? "Failed to update category");
   }
 
   if (notFound) {
@@ -57,7 +56,7 @@ export default function EditCategoryPage() {
       <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Category</h1>
       <p className="mt-1 text-sm text-gray-500">Update this category&apos;s details.</p>
       <div className="mt-6">
-        {initial && <CategoryForm initial={initial} onSubmit={handleSubmit} submitLabel="Save changes" />}
+        {initial && <CategoryForm initialValues={initial} onSubmit={handleSubmit} />}
       </div>
     </div>
   );

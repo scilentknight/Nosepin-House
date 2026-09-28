@@ -70,6 +70,12 @@ export default function EditProductPage() {
           relatedIds: p.relatedIds ?? [],
           crossSellIds: p.crossSellIds ?? [],
           upSellIds: p.upSellIds ?? [],
+          materials: p.materials ?? [],
+          labourCharge: numToStr(p.labourCharge ?? 0),
+          makingCharge: numToStr(p.makingCharge ?? 0),
+          otherCharge: numToStr(p.otherCharge ?? 0),
+          markupType: p.markupType ?? "",
+          markupValue: numToStr(p.markupValue),
         });
       });
   }, [id]);

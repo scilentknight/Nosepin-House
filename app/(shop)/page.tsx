@@ -9,7 +9,7 @@ import StatsSection from "@/components/home/StatsSection";
 import MarqueeBar from "@/components/home/MarqueeBar";
 
 import { PromoProductColumns } from "@/components/home/PromoProductColumns";
-import { CategoryBrandGrid } from "@/components/home/CategoryBrandGrid";
+import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { getCurrentUser } from "@/lib/session";
 import { resolveViewerProductPricing } from "@/lib/checkoutCore";
 import { computeDiscountedUnitPrice, computeAutoPv } from "@/lib/pricing";
@@ -264,7 +264,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      <CategoryBrandGrid
+      <CategoryGrid
         title="Jewellery Categories"
         items={categories}
         hrefFor={(slug) => `/jewellery?category=${slug}`}
@@ -274,14 +274,6 @@ export default async function HomePage() {
 
       <MarqueeBar />
 
-      {/* <PromoProductColumns
-        columns={[
-          { title: "Special Products", products: specialProducts },
-          { title: "Weekly Products", products: weeklyProducts },
-          { title: "Flash Products", products: flashProducts },
-        ]}
-      /> */}
-
       <PromoProductColumns
         columns={[
           { title: "New Arrivals", products: newArrivals },
@@ -289,8 +281,17 @@ export default async function HomePage() {
           { title: "Trending Now", products: trendingProducts },
         ]}
       />
+
+      <PromoProductColumns
+        columns={[
+          { title: "Special Products", products: specialProducts },
+          { title: "Weekly Products", products: weeklyProducts },
+          { title: "Flash Products", products: flashProducts },
+        ]}
+      />
+
       <WhyNosepin />
-        
+
       <StatsSection />
     </div>
   );

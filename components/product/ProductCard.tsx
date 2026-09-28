@@ -16,6 +16,8 @@ export interface ProductCardData {
   rating?: number;
   reviewCount?: number;
   category?: { name: string; slug: string };
+  distributorPrice?: number | null;
+  distributorPv?: number;
 }
 
 export function ProductCard({

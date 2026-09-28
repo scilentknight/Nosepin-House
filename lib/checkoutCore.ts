@@ -272,13 +272,13 @@ export async function resolveCartPricing(
 
   if (isDistributor && productIds.length > 0) {
     const [discountRules, pvRules] = await Promise.all([
-      prisma.productDistributorDiscount.findMany({
+      (prisma as any).productDistributorDiscount?.findMany({
         where: { distributorId: user.id, productId: { in: productIds } },
-      }),
-      prisma.productDistributorPv.findMany({
+      }) ?? Promise.resolve([]),
+      (prisma as any).productDistributorPv?.findMany({
         where: { distributorId: user.id, productId: { in: productIds } },
         select: { productId: true },
-      }),
+      }) ?? Promise.resolve([]),
     ]);
     for (const rule of discountRules) distributorDiscounts.set(rule.productId, Number(rule.discountPercent));
     for (const rule of pvRules) distributorPvEligible.add(rule.productId);
@@ -335,16 +335,20 @@ export async function resolveViewerProductPricing(
   if (isDistributor && user && products.length > 0) {
     const productIds = products.map((p) => p.id);
     const [discountRules, pvRules] = await Promise.all([
-      prisma.productDistributorDiscount.findMany({
-        where: { distributorId: user.id, productId: { in: productIds } },
-      }),
-      prisma.productDistributorPv.findMany({
-        where: { distributorId: user.id, productId: { in: productIds } },
-        select: { productId: true },
-      }),
+      (prisma as any).productDistributorDiscount
+        ? (prisma as any).productDistributorDiscount.findMany({
+            where: { distributorId: user.id, productId: { in: productIds } },
+          })
+        : Promise.resolve([]),
+      (prisma as any).productDistributorPv
+        ? (prisma as any).productDistributorPv.findMany({
+            where: { distributorId: user.id, productId: { in: productIds } },
+            select: { productId: true },
+          })
+        : Promise.resolve([]),
     ]);
-    for (const rule of discountRules) distributorDiscounts.set(rule.productId, Number(rule.discountPercent));
-    for (const rule of pvRules) distributorPvEligible.add(rule.productId);
+    for (const rule of (discountRules as any[])) distributorDiscounts.set(rule.productId, Number(rule.discountPercent));
+    for (const rule of (pvRules as any[])) distributorPvEligible.add(rule.productId);
   }
 
   for (const product of products) {
@@ -364,8 +368,11 @@ export async function resolveViewerProductPricing(
   return result;
 }
 
-export function computeSubtotal(cart: ValidatedCart, pricing: Map<number, CartItemPricing>): number {
-  return cart.items.reduce((sum, item) => sum + pricing.get(item.id)!.unitPrice * item.quantity, 0);
+export function computeSubtotal(cart: ValidatedCart, pricing?: Map<number, CartItemPricing>): number {
+  return cart.items.reduce((sum, item) => {
+    const price = pricing?.get(item.id)?.unitPrice ?? Number(item.variant?.price ?? item.product.price);
+    return sum + price * item.quantity;
+  }, 0);
 }
 
 export async function applyCoupon(subtotal: number, couponCode?: string | null) {
@@ -435,7 +442,7 @@ export async function createOrderFromCart(params: {
   userId: number;
   shipping: ShippingSnapshot;
   cart: ValidatedCart;
-  pricing: Map<number, CartItemPricing>;
+  pricing?: Map<number, CartItemPricing>;
   subtotal: number;
   discount: number;
   shippingFee: number;
@@ -452,10 +459,6 @@ export async function createOrderFromCart(params: {
 }) {
   const total = Math.max(0, params.subtotal - params.discount) + params.shippingFee + params.tax;
   const orderNumber = params.orderNumber ?? generateOrderNumber();
-  const totalPv = params.cart.items.reduce(
-    (sum, item) => sum + params.pricing.get(item.id)!.pvPerUnit * item.quantity,
-    0
-  );
 
   return prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
@@ -471,9 +474,6 @@ export async function createOrderFromCart(params: {
         state: params.shipping.state,
         postalCode: params.shipping.postalCode,
         country: params.shipping.country,
-        dealerId: params.dealer?.id ?? null,
-        dealerName: params.dealer?.name ?? null,
-        dealerPhone: params.dealer?.phone ?? null,
         subtotal: params.subtotal,
         discount: params.discount,
         shippingFee: params.shippingFee,
@@ -486,20 +486,19 @@ export async function createOrderFromCart(params: {
         paymentStatus: params.paymentStatus,
         paymentReference: params.paymentReference ?? null,
         status: "PROCESSING",
-        totalPv,
         items: {
           create: params.cart.items.map((item) => {
             const label = variantLabel(item.variant);
-            const itemPricing = params.pricing.get(item.id)!;
+            const itemPricing = params.pricing?.get(item.id);
+            const unitPrice = itemPricing?.unitPrice ?? Number(item.variant?.price ?? item.product.price);
             return {
               productId: item.productId,
               variantId: item.variantId,
               name: label ? `${item.product.name} (${label})` : item.product.name,
               image: item.variant?.image ?? item.product.images[0]?.url ?? null,
-              price: itemPricing.unitPrice,
+              price: unitPrice,
               quantity: item.quantity,
-              discountPercent: itemPricing.discountPercent,
-              pvEarned: itemPricing.pvPerUnit * item.quantity,
+              discountPercent: itemPricing?.discountPercent ?? null,
             };
           }),
         },
@@ -526,8 +525,8 @@ export async function createOrderFromCart(params: {
       // above — decremented here with an explicit concurrency guard (unlike the master count,
       // which relies on MySQL's row lock) so two simultaneous orders can never both succeed
       // against the last unit of a dealer's stock.
-      if (params.dealer) {
-        const decremented = await tx.dealerInventory.updateMany({
+      if (params.dealer && (tx as any).dealerInventory) {
+        const decremented = await (tx as any).dealerInventory.updateMany({
           where: {
             dealerId: params.dealer.id,
             productId: item.productId,

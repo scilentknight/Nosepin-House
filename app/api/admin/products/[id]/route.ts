@@ -4,6 +4,7 @@ import { ok, fail, handleApiError } from "@/lib/api";
 import { ensureUniqueSlug } from "@/lib/slug";
 import { productSchema } from "@/schemas/admin-product";
 import { syncRelations } from "@/lib/product-relations";
+import { calculateProductPrice } from "@/lib/jewellery/calculate-product-price";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,6 +17,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       where: { id },
       include: {
         images: { orderBy: { sortOrder: "asc" } },
+        materials: {
+          include: { material: true, purity: true },
+          orderBy: { sortOrder: "asc" },
+        },
         relationsFrom: { include: { related: { select: { id: true, name: true } } } },
       },
     });
@@ -31,6 +36,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       length: product.length ? Number(product.length) : null,
       width: product.width ? Number(product.width) : null,
       height: product.height ? Number(product.height) : null,
+      labourCharge: String(product.labourCharge ?? 0),
+      makingCharge: String(product.makingCharge ?? 0),
+      otherCharge: String(product.otherCharge ?? 0),
+      markupType: product.markupType ?? "",
+      markupValue: product.markupValue ? String(product.markupValue) : "",
+      materials: product.materials.map((m) => ({
+        materialId: m.materialId,
+        purityId: m.purityId,
+        quantity: String(m.quantity),
+        unit: m.unit,
+        wastagePercent: String(m.wastagePercent ?? 0),
+        sortOrder: m.sortOrder,
+      })),
       relatedIds: product.relationsFrom.filter((r) => r.type === "RELATED").map((r) => r.relatedId),
       crossSellIds: product.relationsFrom.filter((r) => r.type === "CROSS_SELL").map((r) => r.relatedId),
       upSellIds: product.relationsFrom.filter((r) => r.type === "UP_SELL").map((r) => r.relatedId),
@@ -62,8 +80,32 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const wasPublished = existing.status === "PUBLISHED";
     const isPublished = data.status === "PUBLISHED";
 
+    let finalPrice = data.price ?? Number(existing.price);
+    let finalCostPrice = data.costPrice ?? (existing.costPrice ? Number(existing.costPrice) : null);
+    let pricingUpdatedAt = existing.pricingUpdatedAt;
+
+    if (data.materials && data.materials.length > 0) {
+      const jewelleryPricing = await calculateProductPrice(
+        data.materials.map((m) => ({
+          materialId: m.materialId,
+          purityId: m.purityId,
+          quantity: m.quantity,
+          wastagePercent: m.wastagePercent ?? 0,
+        })),
+        data.labourCharge ?? 0,
+        data.makingCharge ?? 0,
+        data.otherCharge ?? 0,
+        (data.markupType as "PERCENTAGE" | "FIXED" | "") ?? "",
+        data.markupValue ?? 0,
+      );
+      finalPrice = jewelleryPricing.sellingPrice;
+      finalCostPrice = jewelleryPricing.subtotal;
+      pricingUpdatedAt = new Date();
+    }
+
     const product = await prisma.$transaction(async (tx) => {
       await tx.productImage.deleteMany({ where: { productId: id } });
+      await tx.productMaterial.deleteMany({ where: { productId: id } });
 
       const updated = await tx.product.update({
         where: { id },
@@ -75,8 +117,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           brandId: data.brandId || null,
           shortDescription: data.shortDescription || null,
           fullDescription: data.fullDescription,
-          costPrice: data.costPrice ?? null,
-          price: data.price,
+          costPrice: finalCostPrice,
+          price: finalPrice,
           compareAtPrice: data.compareAtPrice ?? null,
           discountType: data.discountType ?? null,
           discountValue: data.discountValue ?? null,
@@ -107,9 +149,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           colorway: data.colorway,
           status: data.status,
           publishedAt: !wasPublished && isPublished ? new Date() : existing.publishedAt,
+          labourCharge: data.labourCharge ?? 0,
+          makingCharge: data.makingCharge ?? 0,
+          otherCharge: data.otherCharge ?? 0,
+          markupType: data.markupType ?? null,
+          markupValue: data.markupValue ?? null,
+          pricingUpdatedAt,
+          materials: {
+            create: data.materials.map((m, i) => ({
+              materialId: m.materialId,
+              purityId: m.purityId,
+              quantity: m.quantity,
+              unit: m.unit,
+              wastagePercent: m.wastagePercent ?? 0,
+              sortOrder: m.sortOrder ?? i,
+            })),
+          },
           images: {
             create: data.images.map((img, i) => ({ url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? i })),
           },
+        },
+        include: {
+          materials: { include: { material: true, purity: true } },
+          images: true,
         },
       });
 

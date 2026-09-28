@@ -7,6 +7,7 @@ import { ensureUniqueSlug } from "@/lib/slug";
 import { generateSku } from "@/lib/sku";
 import { syncRelations } from "@/lib/product-relations";
 import { productSchema } from "@/schemas/admin-product";
+import { calculateProductPrice } from "@/lib/jewellery/calculate-product-price";
 
 export async function GET(request: Request) {
   try {
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
           category: { select: { id: true, name: true } },
           brand: { select: { id: true, name: true } },
           images: { take: 1, orderBy: { sortOrder: "asc" } },
+          materials: { include: { material: true, purity: true } },
           _count: { select: { variants: true } },
         },
         skip,
@@ -55,6 +57,10 @@ export async function GET(request: Request) {
       price: Number(p.price),
       costPrice: p.costPrice ? Number(p.costPrice) : null,
       compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+      labourCharge: Number(p.labourCharge),
+      makingCharge: Number(p.makingCharge),
+      otherCharge: Number(p.otherCharge),
+      markupValue: p.markupValue ? Number(p.markupValue) : null,
     }));
 
     return ok({ products: data, total, page, pageSize });
@@ -74,6 +80,29 @@ export async function POST(request: Request) {
     const slug = await ensureUniqueSlug(prisma.product, data.slug || data.name);
     const sku = data.sku?.trim() || generateSku(data.name);
 
+    let finalPrice = data.price ?? 0;
+    let finalCostPrice = data.costPrice ?? null;
+    let pricingUpdatedAt: Date | null = null;
+
+    if (data.materials && data.materials.length > 0) {
+      const jewelleryPricing = await calculateProductPrice(
+        data.materials.map((m) => ({
+          materialId: m.materialId,
+          purityId: m.purityId,
+          quantity: m.quantity,
+          wastagePercent: m.wastagePercent ?? 0,
+        })),
+        data.labourCharge ?? 0,
+        data.makingCharge ?? 0,
+        data.otherCharge ?? 0,
+        (data.markupType as "PERCENTAGE" | "FIXED" | "") ?? "",
+        data.markupValue ?? 0,
+      );
+      finalPrice = jewelleryPricing.sellingPrice;
+      finalCostPrice = jewelleryPricing.subtotal;
+      pricingUpdatedAt = new Date();
+    }
+
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
         data: {
@@ -84,8 +113,8 @@ export async function POST(request: Request) {
           brandId: data.brandId || null,
           shortDescription: data.shortDescription || null,
           fullDescription: data.fullDescription,
-          costPrice: data.costPrice ?? null,
-          price: data.price,
+          costPrice: finalCostPrice,
+          price: finalPrice,
           compareAtPrice: data.compareAtPrice ?? null,
           discountType: data.discountType ?? null,
           discountValue: data.discountValue ?? null,
@@ -116,9 +145,29 @@ export async function POST(request: Request) {
           colorway: data.colorway,
           status: data.status,
           publishedAt: data.status === "PUBLISHED" ? new Date() : null,
+          labourCharge: data.labourCharge ?? 0,
+          makingCharge: data.makingCharge ?? 0,
+          otherCharge: data.otherCharge ?? 0,
+          markupType: data.markupType ?? null,
+          markupValue: data.markupValue ?? null,
+          pricingUpdatedAt,
+          materials: {
+            create: data.materials.map((m, i) => ({
+              materialId: m.materialId,
+              purityId: m.purityId,
+              quantity: m.quantity,
+              unit: m.unit,
+              wastagePercent: m.wastagePercent ?? 0,
+              sortOrder: m.sortOrder ?? i,
+            })),
+          },
           images: {
             create: data.images.map((img, i) => ({ url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? i })),
           },
+        },
+        include: {
+          materials: { include: { material: true, purity: true } },
+          images: true,
         },
       });
 
