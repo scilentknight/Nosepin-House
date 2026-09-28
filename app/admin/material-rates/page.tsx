@@ -11,7 +11,8 @@ export default function MaterialRatesPage() {
             Material Rates
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage daily material base rates and automatically derived purity rates.
+            Manage daily material base rates and automatically derived purity
+            rates.
           </p>
         </div>
       </div>
