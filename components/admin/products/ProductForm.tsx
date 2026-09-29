@@ -73,7 +73,7 @@ export interface ProductFormValues {
   tags: string[];
   colorway: string;
 
-  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  status: "PUBLISHED" | "DRAFT" | "ARCHIVED";
 
   relatedIds: string[];
   crossSellIds: string[];
@@ -145,7 +145,7 @@ export const EMPTY_PRODUCT: ProductFormValues = {
   tags: [],
   colorway: "green",
 
-  status: "DRAFT",
+  status: "PUBLISHED",
 
   relatedIds: [],
   crossSellIds: [],
@@ -161,9 +161,7 @@ export const EMPTY_PRODUCT: ProductFormValues = {
   markupValue: "",
 };
 
-/* -------------------------------------------------------------------------- */
-/* Category Types                                                            */
-/* -------------------------------------------------------------------------- */
+// Category Types                                                            */
 
 export interface CategoryOption {
   id: string;
@@ -172,24 +170,8 @@ export interface CategoryOption {
   children?: CategoryOption[];
 }
 
-/* -------------------------------------------------------------------------- */
-/* Category Tree Helpers                                                     */
-/* -------------------------------------------------------------------------- */
+// Category Tree Helpers                                                     */
 
-/**
- * Convert a flat category list into a nested tree.
- *
- * Example:
- *
- * Gold Jewellery
- *   Rings
- *     Diamond Rings
- *     Gold Rings
- *   Necklaces
- *
- * Silver Jewellery
- *   Rings
- */
 function buildCategoryTree(categories: CategoryOption[]): CategoryOption[] {
   const categoryMap = new Map<string, CategoryOption>();
 
@@ -221,9 +203,7 @@ function buildCategoryTree(categories: CategoryOption[]): CategoryOption[] {
   return tree;
 }
 
-/**
- * Check whether the API already returned a nested tree.
- */
+// Check whether the API already returned a nested tree.
 function hasNestedChildren(categories: CategoryOption[]): boolean {
   return categories.some(
     (category) =>
@@ -231,64 +211,21 @@ function hasNestedChildren(categories: CategoryOption[]): boolean {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Tabs                                                                      */
-/* -------------------------------------------------------------------------- */
+// Tabs                                                                      */
 
 const TABS = [
   "General",
   "Materials",
   "Pricing",
   "Inventory",
-  "Shipping",
+  // "Shipping",
   "Media",
   "Flags & SEO",
-  "Variants",
+  // "Variants",
   "Related",
 ] as const;
 
 type Tab = (typeof TABS)[number];
-
-/* -------------------------------------------------------------------------- */
-/* Payload                                                                   */
-/* -------------------------------------------------------------------------- */
-
-// function toPayload(values: ProductFormValues) {
-//   const num = (s: string) => (s.trim() === "" ? null : Number(s));
-
-//   return {
-//     ...values,
-
-//     brandId: values.brandId || null,
-
-//     costPrice: num(values.costPrice),
-//     price: num(values.price) ?? 0,
-//     compareAtPrice: num(values.compareAtPrice),
-
-//     discountType: values.discountType || null,
-//     discountValue: num(values.discountValue),
-
-//     stock: num(values.stock) ?? 0,
-//     lowStockAlert: num(values.lowStockAlert),
-
-//     minimumOrderQuantity: num(values.minimumOrderQuantity) ?? 1,
-
-//     maximumOrderQuantity: num(values.maximumOrderQuantity),
-
-//     weight: num(values.weight),
-//     length: num(values.length),
-//     width: num(values.width),
-//     height: num(values.height),
-
-//     images: values.images.map((img, index) => ({
-//       url: img.url,
-//       alt: img.alt,
-//       sortOrder: index,
-//     })),
-//   };
-// }
-
-// new
 
 function toPayload(values: ProductFormValues) {
   const num = (value: string) => (value.trim() === "" ? null : Number(value));
@@ -300,13 +237,6 @@ function toPayload(values: ProductFormValues) {
 
     costPrice: num(values.costPrice),
 
-    /*
-     * We still send these because your
-     * existing product model may use them.
-     *
-     * The server should overwrite the final
-     * price for jewellery products.
-     */
     price: num(values.price),
 
     compareAtPrice: num(values.compareAtPrice),
@@ -331,9 +261,8 @@ function toPayload(values: ProductFormValues) {
 
     height: num(values.height),
 
-    /*
-     * Jewellery pricing
-     */
+    //  Jewellery pricing
+
     labourCharge: num(values.labourCharge) ?? 0,
 
     makingCharge: num(values.makingCharge) ?? 0,
@@ -368,9 +297,7 @@ function toPayload(values: ProductFormValues) {
   };
 }
 
-/* -------------------------------------------------------------------------- */
-/* Props                                                                     */
-/* -------------------------------------------------------------------------- */
+// Props                                                                     */
 
 interface ProductFormProps {
   initial: ProductFormValues;
@@ -383,9 +310,7 @@ interface ProductFormProps {
   submitLabel: string;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Product Form                                                              */
-/* -------------------------------------------------------------------------- */
+// Product Form                                                              */
 
 export function ProductForm({
   initial,
@@ -402,17 +327,13 @@ export function ProductForm({
 
   const [error, setError] = useState<string | null>(null);
 
-  /* ------------------------------------------------------------------------ */
-  /* Categories                                                               */
-  /* ------------------------------------------------------------------------ */
+  // Categories                                                               */
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
 
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  /* ------------------------------------------------------------------------ */
-  /* Set Form Value                                                           */
-  /* ------------------------------------------------------------------------ */
+  // Set Form Value                                                           */
 
   function set<K extends keyof ProductFormValues>(
     key: K,
@@ -424,9 +345,7 @@ export function ProductForm({
     }));
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* Load Categories                                                          */
-  /* ------------------------------------------------------------------------ */
+  // Load Categories                                                          */
 
   useEffect(() => {
     let cancelled = false;
@@ -449,41 +368,12 @@ export function ProductForm({
 
         const json = await response.json();
 
-        /*
-         * Supports these possible API structures:
-         *
-         * {
-         *   data: {
-         *     categories: [...]
-         *   }
-         * }
-         *
-         * OR
-         *
-         * {
-         *   categories: [...]
-         * }
-         *
-         * OR
-         *
-         * {
-         *   data: [...]
-         * }
-         */
-
         const categoryList: CategoryOption[] =
           json?.data?.categories ?? json?.categories ?? json?.data ?? [];
 
         if (cancelled) {
           return;
         }
-
-        /*
-         * If backend already returns nested categories,
-         * use them directly.
-         *
-         * Otherwise convert flat categories to a tree.
-         */
 
         const tree = hasNestedChildren(categoryList)
           ? categoryList
@@ -510,9 +400,7 @@ export function ProductForm({
     };
   }, []);
 
-  /* ------------------------------------------------------------------------ */
-  /* Submit                                                                   */
-  /* ------------------------------------------------------------------------ */
+  // Submit
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -539,9 +427,7 @@ export function ProductForm({
     }
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* Render                                                                   */
-  /* ------------------------------------------------------------------------ */
+  // Render
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -592,7 +478,7 @@ export function ProductForm({
       {tab === "Inventory" && <InventoryTab values={values} set={set} />}
 
       {/* Shipping */}
-      {tab === "Shipping" && <ShippingTab values={values} set={set} />}
+      {/* {tab === "Shipping" && <ShippingTab values={values} set={set} />} */}
 
       {/* Media */}
       {tab === "Media" && <MediaTab values={values} set={set} />}
@@ -601,9 +487,9 @@ export function ProductForm({
       {tab === "Flags & SEO" && <FlagsSeoTab values={values} set={set} />}
 
       {/* Variants */}
-      {tab === "Variants" && values.id && (
+      {/* {tab === "Variants" && values.id && (
         <VariantsManager productId={values.id} />
-      )}
+      )} */}
 
       {/* Related */}
       {tab === "Related" && (

@@ -24,131 +24,414 @@ interface VariantGroup {
 
 interface VariantOption {
   id: number;
+  sku?: string | null;
   price: number | null;
   compareAtPrice: number | null;
   stock: number;
+  lowStockAlert?: number | null;
+  weight?: number | null;
   image: string | null;
   attributeValueIds: number[];
 }
 
-export function ProductPurchasePanel({
-  productId,
-  basePrice,
-  baseCompareAtPrice,
-  baseStock,
-  variantGroups,
-  variants,
-  initialSelected,
-}: {
+interface ProductPurchasePanelProps {
   productId: number;
+
   basePrice: number;
   baseCompareAtPrice: number | null;
   baseStock: number;
+
+  minimumOrderQuantity: number;
+  maximumOrderQuantity: number | null;
+
+  stockStatus: string;
+
+  forCustomer: boolean;
+  customerDiscountPercent: number | null;
+
+  hasDiscount: boolean;
+  discountType: string | null;
+  discountValue: number | null;
+
   variantGroups: VariantGroup[];
   variants: VariantOption[];
+
   initialSelected?: Record<number, number>;
-}) {
+}
+
+export function ProductPurchasePanel({
+  productId,
+
+  basePrice,
+  baseCompareAtPrice,
+  baseStock,
+
+  minimumOrderQuantity,
+  maximumOrderQuantity,
+
+  stockStatus,
+
+  forCustomer,
+  customerDiscountPercent,
+
+  hasDiscount,
+  discountType,
+  discountValue,
+
+  variantGroups,
+  variants,
+
+  initialSelected,
+}: ProductPurchasePanelProps) {
   const { addItem } = useCart();
+
   const showToast = useToast();
+
   const { status } = useSession();
+
   const router = useRouter();
+
   const pathname = usePathname();
-  const [selected, setSelected] = useState<Record<number, number>>(initialSelected ?? {});
-  const [quantity, setQuantity] = useState(1);
+
+  const [selected, setSelected] = useState<Record<number, number>>(
+    initialSelected ?? {},
+  );
+
+  const safeMinimumQuantity = Math.max(1, minimumOrderQuantity || 1);
+
+  const [quantity, setQuantity] = useState(safeMinimumQuantity);
+
   const [isAdding, setIsAdding] = useState(false);
+
   const [isBuyingNow, setIsBuyingNow] = useState(false);
+
   const [added, setAdded] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
 
+  // ============================================================
+  // VARIANTS
+  // ============================================================
+
   const hasVariants = variantGroups.length > 0;
+
   const selectedIds = useMemo(() => Object.values(selected), [selected]);
-  const isComplete = hasVariants && variantGroups.every((g) => selected[g.id] !== undefined);
+
+  const isComplete =
+    hasVariants &&
+    variantGroups.every((group) => selected[group.id] !== undefined);
 
   const matchedVariant = useMemo(() => {
-    if (!isComplete) return null;
+    if (!isComplete) {
+      return null;
+    }
+
     return (
       variants.find(
-        (v) => v.attributeValueIds.length === selectedIds.length && selectedIds.every((id) => v.attributeValueIds.includes(id))
+        (variant) =>
+          variant.attributeValueIds.length === selectedIds.length &&
+          selectedIds.every((id) => variant.attributeValueIds.includes(id)),
       ) ?? null
     );
   }, [isComplete, selectedIds, variants]);
 
-  /** A value is unavailable if no variant matches it combined with the rest of the current selection. */
+  // ============================================================
+  // AVAILABILITY
+  // ============================================================
+
   function isValueAvailable(groupId: number, valueId: number) {
-    const trialSelection = { ...selected, [groupId]: valueId };
+    const trialSelection = {
+      ...selected,
+      [groupId]: valueId,
+    };
+
     const trialIds = Object.values(trialSelection);
-    return variants.some((v) => trialIds.every((id) => v.attributeValueIds.includes(id)));
+
+    return variants.some((variant) =>
+      trialIds.every((id) => variant.attributeValueIds.includes(id)),
+    );
   }
 
   function selectValue(groupId: number, valueId: number) {
     setError(null);
+
     setAdded(false);
-    setSelected((prev) => (prev[groupId] === valueId ? prev : { ...prev, [groupId]: valueId }));
+
+    setSelected((previous) =>
+      previous[groupId] === valueId
+        ? previous
+        : {
+            ...previous,
+            [groupId]: valueId,
+          },
+    );
   }
 
-  const effectivePrice = matchedVariant?.price ?? basePrice;
-  const effectiveCompareAtPrice = matchedVariant ? matchedVariant.compareAtPrice : baseCompareAtPrice;
+  // ============================================================
+  // EFFECTIVE PRICE
+  // ============================================================
+
+  const variantPrice = matchedVariant?.price ?? null;
+
+  const effectiveBasePrice = variantPrice ?? basePrice;
+
+  const variantComparePrice = matchedVariant?.compareAtPrice ?? null;
+
+  const effectiveCompareAtPrice = variantComparePrice ?? baseCompareAtPrice;
+
+  // ============================================================
+  // CUSTOMER DISCOUNT
+  // ============================================================
+
+  const customerDiscount =
+    forCustomer &&
+    customerDiscountPercent !== null &&
+    customerDiscountPercent > 0
+      ? customerDiscountPercent
+      : null;
+
+  const customerDiscountPrice =
+    customerDiscount !== null
+      ? effectiveBasePrice - (effectiveBasePrice * customerDiscount) / 100
+      : null;
+
+  const effectivePrice = customerDiscountPrice ?? effectiveBasePrice;
+
+  // ============================================================
+  // STOCK
+  // ============================================================
+
   const effectiveStock = hasVariants ? (matchedVariant?.stock ?? 0) : baseStock;
-  const onSale = effectiveCompareAtPrice !== null && effectiveCompareAtPrice > effectivePrice;
-  const outOfStock = effectiveStock <= 0;
+
+  const isExplicitlyOutOfStock = stockStatus === "OUT_OF_STOCK";
+
+  const outOfStock = isExplicitlyOutOfStock || effectiveStock <= 0;
+
+  // ============================================================
+  // QUANTITY LIMITS
+  // ============================================================
+
+  const maximumByProduct =
+    maximumOrderQuantity !== null
+      ? maximumOrderQuantity
+      : Number.POSITIVE_INFINITY;
+
+  const maximumAllowedQuantity = Math.min(effectiveStock, maximumByProduct);
+
+  const quantityLimitReached = quantity >= maximumAllowedQuantity;
+
+  const quantityBelowMinimum = quantity < safeMinimumQuantity;
+
+  const onSale =
+    effectiveCompareAtPrice !== null &&
+    effectiveCompareAtPrice > effectivePrice;
+
+  // ============================================================
+  // QUANTITY
+  // ============================================================
+
+  function decreaseQuantity() {
+    setQuantity((current) => Math.max(safeMinimumQuantity, current - 1));
+  }
+
+  function increaseQuantity() {
+    if (outOfStock) {
+      return;
+    }
+
+    if (currentQuantityCannotIncrease()) {
+      return;
+    }
+
+    setQuantity((current) => Math.min(maximumAllowedQuantity, current + 1));
+  }
+
+  function currentQuantityCannotIncrease() {
+    if (
+      Number.isFinite(maximumAllowedQuantity) &&
+      quantity >= maximumAllowedQuantity
+    ) {
+      const reason =
+        maximumByProduct !== Number.POSITIVE_INFINITY &&
+        maximumAllowedQuantity === maximumByProduct
+          ? `Maximum ${maximumByProduct} allowed per order`
+          : `Only ${effectiveStock} in stock`;
+
+      showToast(reason, "error");
+
+      return true;
+    }
+
+    return false;
+  }
+
+  // ============================================================
+  // ACTION
+  // ============================================================
 
   async function handleAction(after: () => void) {
     if (hasVariants && !isComplete) {
-      setError(`Please select ${variantGroups.map((g) => g.name).join(" and ")}`);
+      setError(
+        `Please select ${variantGroups
+          .map((group) => group.name)
+          .join(" and ")}`,
+      );
+
       return false;
     }
+
     if (hasVariants && !matchedVariant) {
       setError("This combination is not available");
+
       return false;
     }
+
+    if (outOfStock) {
+      setError("This product is out of stock");
+
+      return false;
+    }
+
+    if (quantity < safeMinimumQuantity) {
+      setError(`Minimum order quantity is ${safeMinimumQuantity}`);
+
+      return false;
+    }
+
+    if (
+      maximumByProduct !== Number.POSITIVE_INFINITY &&
+      quantity > maximumByProduct
+    ) {
+      setError(`Maximum order quantity is ${maximumByProduct}`);
+
+      return false;
+    }
+
+    if (quantity > effectiveStock) {
+      setError(`Only ${effectiveStock} in stock`);
+
+      return false;
+    }
+
     try {
       await addItem(String(productId), quantity, matchedVariant?.id ?? null);
+
       after();
+
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not add this item to your cart";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not add this item to your cart";
+
       setError(message);
+
       showToast(message, "error");
+
       return false;
     }
   }
+
+  // ============================================================
+  // LOGIN
+  // ============================================================
 
   function redirectToLogin() {
     router.push(`/login?callbackUrl=${encodeURIComponent(pathname ?? "/")}`);
   }
+
+  // ============================================================
+  // ADD TO CART
+  // ============================================================
 
   async function handleAdd() {
     if (status !== "authenticated") {
       redirectToLogin();
       return;
     }
+
     setIsAdding(true);
+
     setError(null);
-    const ok = await handleAction(() => {
+
+    const success = await handleAction(() => {
       setAdded(true);
+
       setTimeout(() => setAdded(false), 2000);
     });
+
     setIsAdding(false);
-    if (!ok) return;
+
+    if (!success) {
+      return;
+    }
   }
+
+  // ============================================================
+  // BUY NOW
+  // ============================================================
 
   async function handleBuyNow() {
     if (status !== "authenticated") {
       redirectToLogin();
       return;
     }
+
     setIsBuyingNow(true);
+
     setError(null);
-    const ok = await handleAction(() => router.push("/cart"));
-    if (!ok) setIsBuyingNow(false);
+
+    const success = await handleAction(() => router.push("/cart"));
+
+    if (!success) {
+      setIsBuyingNow(false);
+    }
   }
 
   return (
     <div>
-      <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold text-primary-700">{formatPrice(effectivePrice)}</span>
-        {onSale && <span className="text-lg text-gray-400 line-through">{formatPrice(effectiveCompareAtPrice!)}</span>}
+      {/* ======================================================
+          PRICE
+      ====================================================== */}
+
+      <div className="flex flex-wrap items-baseline gap-3">
+        <span className="text-3xl font-bold text-primary-700">
+          {formatPrice(effectivePrice)}
+        </span>
+
+        {onSale && (
+          <span className="text-lg text-gray-400 line-through">
+            {formatPrice(effectiveCompareAtPrice!)}
+          </span>
+        )}
       </div>
+
+      {/* CUSTOMER DISCOUNT */}
+
+      {customerDiscount !== null && (
+        <div className="mt-2">
+          <span className="text-xs font-medium text-green-600">
+            {customerDiscount}% customer discount applied
+          </span>
+        </div>
+      )}
+
+      {/* PRODUCT DISCOUNT */}
+
+      {hasDiscount && discountValue !== null && discountValue > 0 && (
+        <div className="mt-2">
+          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
+            {discountType === "PERCENTAGE"
+              ? `${discountValue}% OFF`
+              : `Discount ${formatPrice(discountValue)}`}
+          </span>
+        </div>
+      )}
+
+      {/* ======================================================
+          VARIANTS
+      ====================================================== */}
 
       {hasVariants && (
         <div className="mt-5 flex flex-col gap-4">
@@ -156,45 +439,60 @@ export function ProductPurchasePanel({
             <div key={group.id}>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 {group.name}
+
                 {selected[group.id] !== undefined && (
                   <span className="ml-1.5 font-normal normal-case text-gray-400">
-                    — {group.values.find((v) => v.id === selected[group.id])?.value}
+                    —{" "}
+                    {
+                      group.values.find(
+                        (value) => value.id === selected[group.id],
+                      )?.value
+                    }
                   </span>
                 )}
               </p>
+
               <div className="mt-2 flex flex-wrap gap-2">
                 {group.type === "COLOR"
-                  ? group.values.map((v) => {
-                      const available = isValueAvailable(group.id, v.id);
-                      const isSelected = selected[group.id] === v.id;
+                  ? group.values.map((value) => {
+                      const available = isValueAvailable(group.id, value.id);
+
+                      const isSelected = selected[group.id] === value.id;
+
                       return (
                         <button
-                          key={v.id}
+                          key={value.id}
                           type="button"
-                          onClick={() => selectValue(group.id, v.id)}
+                          onClick={() => selectValue(group.id, value.id)}
                           disabled={!available}
-                          title={v.value}
-                          aria-label={v.value}
+                          title={value.value}
+                          aria-label={value.value}
                           aria-current={isSelected}
                           className={`flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-offset-2 transition-shadow disabled:cursor-not-allowed disabled:opacity-30 ${
-                            isSelected ? "ring-primary-500" : "ring-transparent hover:ring-gray-200"
+                            isSelected
+                              ? "ring-primary-500"
+                              : "ring-transparent hover:ring-gray-200"
                           }`}
                         >
                           <span
                             className="h-7 w-7 rounded-full border border-black/10"
-                            style={{ backgroundColor: v.colorHex ?? "#d1d5db" }}
+                            style={{
+                              backgroundColor: value.colorHex ?? "#d1d5db",
+                            }}
                           />
                         </button>
                       );
                     })
-                  : group.values.map((v) => {
-                      const available = isValueAvailable(group.id, v.id);
-                      const isSelected = selected[group.id] === v.id;
+                  : group.values.map((value) => {
+                      const available = isValueAvailable(group.id, value.id);
+
+                      const isSelected = selected[group.id] === value.id;
+
                       return (
                         <button
-                          key={v.id}
+                          key={value.id}
                           type="button"
-                          onClick={() => selectValue(group.id, v.id)}
+                          onClick={() => selectValue(group.id, value.id)}
                           disabled={!available}
                           aria-current={isSelected}
                           className={`rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
@@ -203,7 +501,7 @@ export function ProductPurchasePanel({
                               : "border-gray-200 text-gray-700 hover:border-gray-300"
                           }`}
                         >
-                          {v.value}
+                          {value.value}
                         </button>
                       );
                     })}
@@ -213,64 +511,117 @@ export function ProductPurchasePanel({
         </div>
       )}
 
+      {/* ======================================================
+          PURCHASE BOX
+      ====================================================== */}
+
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-soft">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
+          {/* QUANTITY */}
+
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center rounded-full border border-gray-200">
               <button
                 type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="px-3.5 py-2 text-gray-600 transition-colors hover:bg-gray-50"
+                onClick={decreaseQuantity}
+                disabled={quantity <= safeMinimumQuantity}
+                className="px-3.5 py-2 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Decrease quantity"
               >
                 −
               </button>
-              <span className="w-10 text-center text-sm font-medium">{quantity}</span>
+
+              <span className="w-10 text-center text-sm font-medium">
+                {quantity}
+              </span>
+
               <button
                 type="button"
-                onClick={() => {
-                  if (quantity >= effectiveStock) {
-                    showToast(`Only ${effectiveStock} in stock`, "error");
-                    return;
-                  }
-                  setQuantity((q) => Math.min(Math.max(effectiveStock, 1), q + 1));
-                }}
-                className="px-3.5 py-2 text-gray-600 transition-colors hover:bg-gray-50"
+                onClick={increaseQuantity}
+                disabled={outOfStock || quantityLimitReached}
+                className="px-3.5 py-2 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Increase quantity"
               >
                 +
               </button>
             </div>
+
+            {/* STOCK STATUS */}
+
             <span
               className={`rounded-full px-3 py-1 text-xs font-medium ${
-                outOfStock ? "bg-red-50 text-red-600" : "bg-accent-50 text-accent-700"
+                outOfStock
+                  ? "bg-red-50 text-red-600"
+                  : "bg-accent-50 text-accent-700"
               }`}
             >
-              {hasVariants && !isComplete ? "Select options" : outOfStock ? "Out of stock" : `${effectiveStock} in stock`}
+              {hasVariants && !isComplete
+                ? "Select options"
+                : outOfStock
+                  ? "Out of stock"
+                  : `${effectiveStock} in stock`}
             </span>
           </div>
+
+          {/* QUANTITY INFO */}
+
+          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+            {safeMinimumQuantity > 1 && (
+              <span>
+                Minimum order:{" "}
+                <strong className="text-gray-700">{safeMinimumQuantity}</strong>
+              </span>
+            )}
+
+            {maximumByProduct !== Number.POSITIVE_INFINITY && (
+              <span>
+                Maximum order:{" "}
+                <strong className="text-gray-700">{maximumByProduct}</strong>
+              </span>
+            )}
+          </div>
+
+          {/* LOW STOCK */}
+
+          {!outOfStock && effectiveStock > 0 && effectiveStock <= 5 && (
+            <p className="text-xs font-medium text-orange-600">
+              Only {effectiveStock} left in stock
+            </p>
+          )}
+
+          {/* BUTTONS */}
 
           <div className="flex gap-3">
             <Button
               variant="outline"
               size="lg"
               className="flex-1"
-              disabled={outOfStock && isComplete}
+              disabled={
+                outOfStock ||
+                quantityBelowMinimum ||
+                (hasVariants && !isComplete)
+              }
               isLoading={isAdding}
               onClick={handleAdd}
             >
               {added ? "Added ✓" : "Add to Cart"}
             </Button>
+
             <Button
               variant="primary"
               size="lg"
               className="flex-1"
-              disabled={outOfStock && isComplete}
+              disabled={
+                outOfStock ||
+                quantityBelowMinimum ||
+                (hasVariants && !isComplete)
+              }
               isLoading={isBuyingNow}
               onClick={handleBuyNow}
             >
               Buy Now
             </Button>
+
             <WishlistButton
               productId={productId}
               variantId={matchedVariant?.id ?? null}
@@ -278,6 +629,8 @@ export function ProductPurchasePanel({
               className="border border-gray-200 shadow-none"
             />
           </div>
+
+          {/* ERROR */}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>

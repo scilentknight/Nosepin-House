@@ -6,7 +6,10 @@ import type { ProductFormValues } from "@/components/admin/products/ProductForm"
 
 interface TabProps {
   values: ProductFormValues;
-  set: <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => void;
+  set: <K extends keyof ProductFormValues>(
+    key: K,
+    value: ProductFormValues[K],
+  ) => void;
 }
 
 const FLAGS: { key: keyof ProductFormValues; label: string }[] = [
@@ -34,14 +37,24 @@ export function FlagsSeoTab({ values, set }: TabProps) {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-soft">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Flags</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Flags
+        </h2>
         <div className="grid grid-cols-2 gap-2">
           {FLAGS.map((flag) => (
-            <label key={flag.key} className="flex items-center gap-2 text-sm text-gray-700">
+            <label
+              key={flag.key}
+              className="flex items-center gap-2 text-sm text-gray-700"
+            >
               <input
                 type="checkbox"
                 checked={Boolean(values[flag.key])}
-                onChange={(e) => set(flag.key, e.target.checked as ProductFormValues[typeof flag.key])}
+                onChange={(e) =>
+                  set(
+                    flag.key,
+                    e.target.checked as ProductFormValues[typeof flag.key],
+                  )
+                }
                 className="h-4 w-4 rounded border-gray-300"
               />
               {flag.label}
@@ -53,16 +66,18 @@ export function FlagsSeoTab({ values, set }: TabProps) {
           <label className="text-sm font-medium text-gray-700">Status</label>
           <select
             value={values.status}
-            onChange={(e) => set("status", e.target.value as ProductFormValues["status"])}
+            onChange={(e) =>
+              set("status", e.target.value as ProductFormValues["status"])
+            }
             className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
           >
-            <option value="DRAFT">Draft</option>
             <option value="PUBLISHED">Published</option>
+            <option value="DRAFT">Draft</option>
             <option value="ARCHIVED">Archived</option>
           </select>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        {/* <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700">Placeholder accent color</label>
           <div className="flex gap-2">
             {COLORWAYS.map((c) => (
@@ -76,17 +91,29 @@ export function FlagsSeoTab({ values, set }: TabProps) {
               />
             ))}
           </div>
-        </div>
+        </div> */}
 
-        <Input label="Warranty" value={values.warranty} onChange={(e) => set("warranty", e.target.value)} placeholder="e.g. 1 year manufacturer warranty" />
+        {/* <Input label="Warranty" value={values.warranty} onChange={(e) => set("warranty", e.target.value)} placeholder="e.g. 1 year manufacturer warranty" /> */}
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700">Tags</label>
           <div className="flex flex-wrap gap-2">
             {values.tags.map((tag) => (
-              <span key={tag} className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+              <span
+                key={tag}
+                className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+              >
                 {tag}
-                <button type="button" onClick={() => set("tags", values.tags.filter((t) => t !== tag))} aria-label={`Remove ${tag}`}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    set(
+                      "tags",
+                      values.tags.filter((t) => t !== tag),
+                    )
+                  }
+                  aria-label={`Remove ${tag}`}
+                >
                   ×
                 </button>
               </span>
@@ -110,10 +137,18 @@ export function FlagsSeoTab({ values, set }: TabProps) {
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-soft">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">SEO</h2>
-        <Input label="Meta title" value={values.metaTitle} onChange={(e) => set("metaTitle", e.target.value)} />
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          SEO
+        </h2>
+        <Input
+          label="Meta title"
+          value={values.metaTitle}
+          onChange={(e) => set("metaTitle", e.target.value)}
+        />
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700">Meta description</label>
+          <label className="text-sm font-medium text-gray-700">
+            Meta description
+          </label>
           <textarea
             value={values.metaDescription}
             onChange={(e) => set("metaDescription", e.target.value)}
@@ -121,7 +156,11 @@ export function FlagsSeoTab({ values, set }: TabProps) {
             className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
           />
         </div>
-        <Input label="Meta keywords" value={values.metaKeywords} onChange={(e) => set("metaKeywords", e.target.value)} />
+        <Input
+          label="Meta keywords"
+          value={values.metaKeywords}
+          onChange={(e) => set("metaKeywords", e.target.value)}
+        />
       </div>
     </div>
   );

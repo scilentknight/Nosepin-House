@@ -153,7 +153,7 @@ export function GeneralTab({
         </div>
 
         {/* Brand */}
-        <div className="flex flex-col gap-1.5">
+        {/* <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700">Brand</label>
 
           <select
@@ -169,7 +169,7 @@ export function GeneralTab({
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
       </div>
     </div>
   );
