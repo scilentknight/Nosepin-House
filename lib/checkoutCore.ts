@@ -498,7 +498,7 @@ export async function createOrderFromCart(params: {
               image: item.variant?.image ?? item.product.images[0]?.url ?? null,
               price: unitPrice,
               quantity: item.quantity,
-              discountPercent: itemPricing?.discountPercent ?? null,
+              // discountPercent: itemPricing?.discountPercent ?? null,
             };
           }),
         },
