@@ -911,7 +911,7 @@ export function Header() {
             {/* LOGO */}
 
             <Link href="/" className="shrink-0">
-              <Logo iconSize={80} />
+              <Logo iconSize={100} />
             </Link>
 
             {/* DESKTOP NAVIGATION */}

@@ -126,3 +126,27 @@ body {
 [data-next-badge-root] {
   display: none !important;
 }
+
+
+/* Admin dark theme overrides */
+.dark .bg-gray-100 { background-color: #020617; }
+.dark .bg-white { background-color: #0f172a; }
+.dark .bg-gray-50, .dark .bg-slate-50 { background-color: #111c33; }
+.dark .bg-slate-100, .dark .bg-slate-200 { background-color: #1e293b; }
+
+.dark .text-slate-900, .dark .text-gray-900 { color: #f1f5f9; }
+.dark .text-slate-800, .dark .text-gray-800 { color: #e2e8f0; }
+.dark .text-slate-700, .dark .text-gray-700,
+.dark .text-slate-600, .dark .text-gray-600 { color: #cbd5e1; }
+.dark .text-slate-500, .dark .text-gray-500 { color: #94a3b8; }
+.dark .text-slate-400 { color: #94a3b8; }
+
+.dark .border-slate-100, .dark .border-gray-100 { border-color: #1e293b; }
+.dark .border-slate-200, .dark .border-gray-200 { border-color: #334155; }
+
+.dark input, .dark select, .dark textarea {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+.dark .hover\:bg-gray-100:hover, .dark .hover\:bg-gray-50:hover { background-color: #1e293b; }

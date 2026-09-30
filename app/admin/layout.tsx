@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -26,27 +26,18 @@ const NAV_ITEMS = [
       <path d="M4 6h7v7H4V6zm9 0h7v4h-7V6zM4 15h4v5H4v-5zm7 2h9v3h-9v-3z" />
     ),
   },
-  // {
-  //   href: "/admin/brands",
-  //   label: "Brands",
-  //   icon: <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />,
-  // },
-
   {
-    label: "Materials",
     href: "/admin/materials",
-    icon: (
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-    ),
+    label: "Materials",
+    icon: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />,
   },
   {
-    label: "Material Rates",
     href: "/admin/material-rates",
+    label: "Material Rates",
     icon: (
       <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 14.5h-2v-1.1c-1.3-.2-2.3-1.1-2.4-2.4h1.9c.1.5.5.9 1.1.9.7 0 1.1-.4 1.1-.9 0-.5-.3-.8-1.4-1.1-1.6-.4-2.6-1.1-2.6-2.5 0-1.2.9-2.1 2.3-2.3V4h2v1.1c1.1.2 2 1 2.2 2.2h-1.9c-.1-.4-.4-.8-1-.8-.6 0-1 .3-1 .8 0 .4.3.7 1.4 1 1.6.4 2.6 1.1 2.6 2.5 0 1.3-.9 2.2-2.3 2.4v1.3z" />
     ),
   },
-
   {
     href: "/admin/products",
     label: "Products",
@@ -89,10 +80,99 @@ const NAV_ITEMS = [
   },
 ];
 
+// Sidebar keeps the same colours in light and dark mode
+const SIDEBAR = {
+  bg: "bg-[#0f2747]",
+  border: "border-white/10",
+  title: "text-white",
+  subtitle: "text-slate-400",
+  link: "text-slate-300 hover:bg-white/10 hover:text-white",
+  active: "bg-[#eb6834] text-white",
+};
+
+function Avatar({
+  image,
+  name,
+  size,
+}: {
+  image?: string | null;
+  name?: string | null;
+  size: "sm" | "md";
+}) {
+  const dim = size === "sm" ? "h-8 w-8 text-xs" : "h-9 w-9 text-sm";
+  return image ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={image}
+      alt=""
+      className={`${dim} shrink-0 rounded-full object-cover`}
+    />
+  ) : (
+    <span
+      className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-slate-700 font-semibold text-white`}
+    >
+      {name?.[0]?.toUpperCase() ?? "A"}
+    </span>
+  );
+}
+
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false); // desktop only: icon rail
+  const [darkMode, setDarkMode] = useState(false);
+  const sb = SIDEBAR;
+
+  // Every colour in the header/content shell is driven by this, so it never depends on Tailwind's dark: setup
+  const t = darkMode
+    ? {
+        shell: "bg-slate-950",
+        header: "border-slate-800 bg-slate-900",
+        iconBtn: "text-slate-300 hover:bg-slate-800",
+        heading: "text-slate-400",
+        name: "text-slate-200",
+        chevron: "text-slate-500",
+        menu: "border-slate-700 bg-slate-800",
+        menuName: "text-white",
+        menuEmail: "text-slate-400",
+        divider: "border-slate-700",
+        menuLink: "text-slate-300 hover:bg-slate-700",
+        signOut: "hover:bg-slate-700",
+      }
+    : {
+        shell: "bg-gray-100",
+        header: "border-gray-200 bg-white",
+        iconBtn: "text-gray-600 hover:bg-gray-100",
+        heading: "text-slate-500",
+        name: "text-gray-700",
+        chevron: "text-gray-400",
+        menu: "border-gray-200 bg-white",
+        menuName: "text-gray-900",
+        menuEmail: "text-gray-500",
+        divider: "border-gray-100",
+        menuLink: "text-gray-700 hover:bg-gray-50",
+        signOut: "hover:bg-gray-50",
+      };
+
+  // Restore the saved theme once on mount
+  useEffect(() => {
+    setDarkMode(localStorage.getItem("admin-theme") === "dark");
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    localStorage.setItem("admin-theme", next ? "dark" : "light");
+  };
+
+  const toggleSidebar = () => {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setCollapsed((c) => !c);
+    } else {
+      setMobileOpen((o) => !o);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -105,23 +185,29 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-slate-900 transition-transform duration-200 lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col overflow-hidden ${sb.bg} transition-[width,transform] duration-200 lg:translate-x-0 ${
+          collapsed ? "lg:w-20" : "lg:w-64"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-800 px-5">
-          <Logo showText={false} iconSize={70} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold leading-ti ght text-white">
+        <div
+          className={`flex h-16 shrink-0 items-center gap-2 border-b ${sb.border} px-5 ${
+            collapsed ? "lg:justify-center lg:px-0" : ""
+          }`}
+        >
+          <Logo showText={false} iconSize={80} />
+          <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
+            <p
+              className={`truncate text-sm font-bold leading-tight ${sb.title}`}
+            >
               NOSEPIN HOUSE
             </p>
-            <p className="text-[11px] uppercase tracking-wide text-slate-400">
+            <p className={`text-[11px] uppercase tracking-wide ${sb.subtitle}`}>
               Admin Panel
             </p>
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 text-sm font-medium">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden p-3 text-sm font-medium">
           {NAV_ITEMS.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -130,12 +216,11 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
               <Link
                 key={item.href}
                 href={item.href}
+                title={collapsed ? item.label : undefined}
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                  isActive
-                    ? "bg-sky-500/15 text-sky-400"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+                  collapsed ? "lg:justify-center lg:px-0" : ""
+                } ${isActive ? sb.active : sb.link}`}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -146,19 +231,30 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
                 >
                   {item.icon}
                 </svg>
-                {item.label}
+                <span
+                  className={`whitespace-nowrap ${collapsed ? "lg:hidden" : ""}`}
+                >
+                  {item.label}
+                </span>
               </Link>
             );
           })}
         </nav>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:px-6">
+      <div
+        className={`min-h-screen transition-[padding] duration-200 ${t.shell} ${
+          darkMode ? "dark" : ""
+        } ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}
+      >
+        <header
+          className={`sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 sm:px-6 ${t.header}`}
+        >
           <button
-            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open admin menu"
+            className={`rounded-lg p-2 ${t.iconBtn}`}
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+            aria-expanded={!collapsed || mobileOpen}
           >
             <svg
               viewBox="0 0 24 24"
@@ -170,74 +266,107 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
               <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <p
+            className={`text-sm font-semibold uppercase tracking-wide ${t.heading}`}
+          >
             Admin Dashboard
           </p>
 
-          <div className="relative ml-auto group">
-            <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100">
-              {session?.user?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={session.user.image}
-                  alt=""
-                  className="h-8 w-8 shrink-0 rounded-full object-cover"
-                />
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={
+                darkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
+              title={darkMode ? "Light mode" : "Dark mode"}
+              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
+                darkMode
+                  ? "border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20"
+                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {darkMode ? (
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
               ) : (
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white">
-                  {session?.user?.name?.[0]?.toUpperCase() ?? "A"}
-                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                >
+                  <path d="M21 12.8A8.5 8.5 0 1111.2 3 6.7 6.7 0 0021 12.8z" />
+                </svg>
               )}
-              <span className="hidden text-sm font-medium text-gray-700 sm:inline">
-                {session?.user?.name ?? "Admin"}
-              </span>
-              <svg
-                viewBox="0 0 24 24"
-                className="hidden h-4 w-4 text-gray-400 sm:block"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
             </button>
 
-            <div className="invisible absolute right-0 z-50 mt-1 w-56 rounded-xl border border-gray-200 bg-white py-1 opacity-0 shadow-xl transition-opacity group-hover:visible group-hover:opacity-100">
-              <div className="flex items-center gap-3 px-4 py-3">
-                {session?.user?.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={session.user.image}
-                    alt=""
-                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+            <div className="group relative">
+              <button
+                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${t.iconBtn}`}
+              >
+                <Avatar
+                  image={session?.user?.image}
+                  name={session?.user?.name}
+                  size="sm"
+                />
+                <span
+                  className={`hidden text-sm font-medium sm:inline ${t.name}`}
+                >
+                  {session?.user?.name ?? "Admin"}
+                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`hidden h-4 w-4 sm:block ${t.chevron}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              <div
+                className={`invisible absolute right-0 z-50 mt-1 w-56 rounded-xl border py-1 opacity-0 shadow-xl transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100 ${t.menu}`}
+              >
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <Avatar
+                    image={session?.user?.image}
+                    name={session?.user?.name}
+                    size="md"
                   />
-                ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white">
-                    {session?.user?.name?.[0]?.toUpperCase() ?? "A"}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-900">
-                    {session?.user?.name ?? "Admin"}
-                  </p>
-                  <p className="truncate text-xs text-gray-500">
-                    {session?.user?.email ?? ""}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <p className={`truncate text-sm font-medium ${t.menuName}`}>
+                      {session?.user?.name ?? "Admin"}
+                    </p>
+                    <p className={`truncate text-xs ${t.menuEmail}`}>
+                      {session?.user?.email ?? ""}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="border-t border-gray-100 py-1">
-                <Link
-                  href="/admin/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Your Profile
-                </Link>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="block w-full px-4 py-2 text-left text-sm text-secondary-600 hover:bg-gray-50"
-                >
-                  Sign out
-                </button>
+                <div className={`border-t py-1 ${t.divider}`}>
+                  <Link
+                    href="/admin/profile"
+                    className={`block px-4 py-2 text-sm ${t.menuLink}`}
+                  >
+                    Your Profile
+                  </Link>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className={`block w-full px-4 py-2 text-left text-sm text-secondary-600 ${t.signOut}`}
+                  >
+                    Sign out
+                  </button>
+                </div>
               </div>
             </div>
           </div>
