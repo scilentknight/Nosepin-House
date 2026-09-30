@@ -55,6 +55,7 @@ function mapProductCard(
     compareAtPrice: unknown;
     colorway: string;
     stock: number;
+    featuredImage: string | null;
     images: { url: string | null }[];
     category: { name: string; slug: string } | null;
     reviews: { rating: number }[];
@@ -77,7 +78,7 @@ function mapProductCard(
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
     colorway: p.colorway,
     stock: p.stock,
-    image: p.images[0]?.url ?? null,
+    image: p.featuredImage ?? null,
     category: p.category ?? undefined,
     rating: Math.round(avgRating * 10) / 10,
     reviewCount: p.reviews.length,
@@ -92,7 +93,11 @@ function mapProductCard(
 const CARD_INCLUDE = {
   category: true,
   images: { take: 1 as const },
-  reviews: { select: { rating: true as const } },
+  reviews: {
+    select: {
+      rating: true as const,
+    },
+  },
 };
 
 async function getHomeData() {

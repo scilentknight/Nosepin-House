@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, handleApiError } from "@/lib/api";
 import { variantLabel } from "@/lib/checkoutCore";
-import { getBaseUrl, absoluteUrl } from "@/lib/media";
+// import { getBaseUrl, absoluteUrl } from "@/lib/media";
 
 function decimalToNumber(value: unknown): number | null {
   if (value === null || value === undefined) {
@@ -146,7 +146,7 @@ function toProductDTO(
       };
     }[];
   },
-  baseUrl: string,
+  // baseUrl: string,
 ) {
   const avgRating = product.reviews?.length
     ? product.reviews.reduce((sum, review) => sum + review.rating, 0) /
@@ -178,11 +178,16 @@ function toProductDTO(
 
       description: product.category.description,
 
-      image: absoluteUrl(product.category.image, baseUrl),
+      // image: absoluteUrl(product.category.image, baseUrl),
 
-      bannerImage: absoluteUrl(product.category.bannerImage, baseUrl),
+      // bannerImage: absoluteUrl(product.category.bannerImage, baseUrl),
 
-      icon: absoluteUrl(product.category.icon, baseUrl),
+      // icon: absoluteUrl(product.category.icon, baseUrl),
+      image: product.category.image,
+
+      bannerImage: product.category.bannerImage,
+
+      icon: product.category.icon,
 
       metaTitle: product.category.metaTitle,
       metaDescription: product.category.metaDescription,
@@ -209,7 +214,8 @@ function toProductDTO(
           name: product.brand.name,
           slug: product.brand.slug,
 
-          logo: absoluteUrl(product.brand.logo, baseUrl),
+          // logo: absoluteUrl(product.brand.logo, baseUrl),
+          logo: product.brand.logo,
         }
       : null,
 
@@ -276,20 +282,31 @@ function toProductDTO(
     // IMAGES
     // =========================================================
 
-    featuredImage: absoluteUrl(product.featuredImage, baseUrl),
+    // featuredImage: absoluteUrl(product.featuredImage, baseUrl),
 
-    image: absoluteUrl(
-      product.images[0]?.url ?? product.featuredImage,
-      baseUrl,
-    ),
+    // image: absoluteUrl(
+    //   product.images[0]?.url ?? product.featuredImage,
+    //   baseUrl,
+    // ),
+
+    // images: product.images.map((image) => ({
+    //   id: image.id,
+
+    //   url: absoluteUrl(image.url, baseUrl),
+
+    //   alt: image.alt,
+
+    //   sortOrder: image.sortOrder,
+    // })),
+
+    featuredImage: product.featuredImage,
+
+    image: product.images[0]?.url ?? product.featuredImage,
 
     images: product.images.map((image) => ({
       id: image.id,
-
-      url: absoluteUrl(image.url, baseUrl),
-
+      url: image.url,
       alt: image.alt,
-
       sortOrder: image.sortOrder,
     })),
 
@@ -415,7 +432,7 @@ export async function GET(request: NextRequest) {
     // BASE URL
     // =========================================================
 
-    const baseUrl = getBaseUrl(request);
+    // const baseUrl = getBaseUrl(request);
 
     // =========================================================
     // GET PRODUCTS BY IDS
@@ -499,8 +516,10 @@ export async function GET(request: NextRequest) {
       });
 
       return ok(
+        // products.map((product) => ({
+        //   ...toProductDTO(product, baseUrl),
         products.map((product) => ({
-          ...toProductDTO(product, baseUrl),
+          ...toProductDTO(product),
 
           // ===================================================
           // VARIANTS
@@ -527,7 +546,8 @@ export async function GET(request: NextRequest) {
 
             weight: variant.weight !== null ? Number(variant.weight) : null,
 
-            image: absoluteUrl(variant.image, baseUrl),
+            // image: absoluteUrl(variant.image, baseUrl),
+            image: variant.image,
 
             status: variant.status,
 
@@ -733,7 +753,8 @@ export async function GET(request: NextRequest) {
 
       message: "Products retrieved successfully",
 
-      data: products.map((product) => toProductDTO(product, baseUrl)),
+      // data: products.map((product) => toProductDTO(product, baseUrl)),
+      data: products.map((product) => toProductDTO(product)),
 
       pagination: {
         page,
