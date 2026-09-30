@@ -55,7 +55,7 @@ type ProductSuggestion = {
   name: string;
   slug: string;
   price: number;
-  image: string | null;
+  featuredImage: string | null;
 };
 
 /* =========================================================
@@ -569,9 +569,9 @@ function SearchBox({
                   {/* Product image */}
 
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-[#FBF6EE]">
-                    {product.image ? (
+                    {product.featuredImage ? (
                       <Image
-                        src={product.image}
+                        src={product.featuredImage}
                         alt={product.name}
                         fill
                         className="object-cover"

@@ -352,11 +352,20 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       prisma.product.findMany({
         where,
         orderBy: SORT_OPTIONS[sortKey].orderBy,
+        // include: {
+        //   category: true,
+        //   featuredImage: true,
+        //   images: {
+        //     take: 1,
+        //   },
+        //   reviews: {
+        //     select: {
+        //       rating: true,
+        //     },
+        //   },
+        // },
         include: {
           category: true,
-          images: {
-            take: 1,
-          },
           reviews: {
             select: {
               rating: true,
@@ -849,7 +858,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                         : null,
                       colorway: p.colorway,
                       stock: p.stock,
-                      image: p.images[0]?.url ?? null,
+                      image: p.featuredImage ?? null,
                       category: p.category,
                       rating: Math.round(p.avgRating * 10) / 10,
                       reviewCount: p.reviews.length,

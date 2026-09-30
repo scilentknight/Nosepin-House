@@ -175,7 +175,7 @@ export default function ContactPage() {
 
                 {/* WhatsApp */}
                 <a
-                  href="https://wa.me/9779861252006"
+                  href="https://wa.me/9861435554"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Chat with NOSEPINHOUSE on WhatsApp"
