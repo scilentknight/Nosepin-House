@@ -633,7 +633,10 @@ export function CategoryForm({
             <select
               id="category-status"
               value={values.status}
-              onChange={(event) => set("status", event.target.value)}
+              // onChange={(event) => set("status", event.target.value)}
+              onChange={(e) =>
+                set("status", e.target.value as "ACTIVE" | "INACTIVE")
+              }
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100 md:max-w-sm"
             >
               <option value="ACTIVE">Active</option>
