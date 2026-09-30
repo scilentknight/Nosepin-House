@@ -117,7 +117,7 @@ function SearchBox({
     setLoading(true);
 
     const timeout = setTimeout(() => {
-      fetch(`/api/products?search=${encodeURIComponent(term)}&pageSize=6`)
+      fetch(`/api/products?search=${encodeURIComponent(term)}&pageSize=5`)
         .then((res) => res.json())
         .then((data) => {
           setSuggestions(
