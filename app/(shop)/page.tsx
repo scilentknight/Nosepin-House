@@ -24,6 +24,27 @@ import {
 
 const HERO_BANNER_IMAGE = "/images/hero-banner-img.jpeg";
 
+// function mapPromoProduct(p: {
+//   id: number;
+//   name: string;
+//   slug: string;
+//   price: unknown;
+//   compareAtPrice: unknown;
+//   colorway: string;
+//   images: { url: string | null }[];
+//   brand: { name: string } | null;
+// }) {
+//   return {
+//     id: p.id,
+//     name: p.name,
+//     slug: p.slug,
+//     price: Number(p.price),
+//     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+//     colorway: p.colorway,
+//     image: p.images[0]?.url ?? null,
+//     brandName: p.brand?.name ?? null,
+//   };
+// }
 function mapPromoProduct(p: {
   id: number;
   name: string;
@@ -31,7 +52,7 @@ function mapPromoProduct(p: {
   price: unknown;
   compareAtPrice: unknown;
   colorway: string;
-  images: { url: string | null }[];
+  featuredImage: string | null;
   brand: { name: string } | null;
 }) {
   return {
@@ -41,7 +62,10 @@ function mapPromoProduct(p: {
     price: Number(p.price),
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
     colorway: p.colorway,
-    image: p.images[0]?.url ?? null,
+
+    // Always use the product's featured image
+    featuredImage: p.featuredImage ?? null,
+
     brandName: p.brand?.name ?? null,
   };
 }
