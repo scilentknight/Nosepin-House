@@ -9,11 +9,11 @@ import type { GalleryImage } from "@/components/admin/GalleryUpload";
 import { GeneralTab } from "@/components/admin/products/tabs/GeneralTab";
 import { PricingTab } from "@/components/admin/products/tabs/PricingTab";
 import { InventoryTab } from "@/components/admin/products/tabs/InventoryTab";
-import { ShippingTab } from "@/components/admin/products/tabs/ShippingTab";
+// import { ShippingTab } from "@/components/admin/products/tabs/ShippingTab";
 import { MediaTab } from "@/components/admin/products/tabs/MediaTab";
 import { FlagsSeoTab } from "@/components/admin/products/tabs/FlagsSeoTab";
 import { RelatedTab } from "@/components/admin/products/tabs/RelatedTab";
-import { VariantsManager } from "@/components/admin/products/VariantsManager";
+// import { VariantsManager } from "@/components/admin/products/VariantsManager";
 
 import type { ProductMaterialValue, MarkupType } from "@/lib/jewellery/types";
 
@@ -433,7 +433,7 @@ export function ProductForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {/* Tabs */}
       <div className="flex flex-nowrap gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-1.5 shadow-soft">
-        {TABS.map((t) => (
+        {/* {TABS.map((t) => (
           <button
             key={t}
             type="button"
@@ -445,6 +445,20 @@ export function ProductForm({
                 : undefined
             }
             className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              tab === t
+                ? "bg-slate-800 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            {t}
+          </button>
+        ))} */}
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               tab === t
                 ? "bg-slate-800 text-white"
                 : "text-gray-600 hover:bg-gray-100"
