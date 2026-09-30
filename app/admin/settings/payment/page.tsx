@@ -132,7 +132,6 @@ export default function PaymentSettingsPage() {
         <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-soft">
           <div className="flex items-center gap-2">
             {values.esewaLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={values.esewaLogo} alt="eSewa" className="h-7 w-auto max-w-[72px] shrink-0 rounded object-contain" />
             ) : (
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#60BB46] text-xs font-bold text-white">

@@ -13,38 +13,11 @@ import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { getCurrentUser } from "@/lib/session";
 import { resolveViewerProductPricing } from "@/lib/checkoutCore";
 import { computeDiscountedUnitPrice, computeAutoPv } from "@/lib/pricing";
-import {
-  Award,
-  CreditCard,
-  Truck,
-  RefreshCcw,
-  ArrowLeftRight,
-  Diamond,
-} from "lucide-react";
+import { GoogleReviews } from "@/components/home/GoogleReviews";
+
 
 const HERO_BANNER_IMAGE = "/images/hero-banner-img.jpeg";
 
-// function mapPromoProduct(p: {
-//   id: number;
-//   name: string;
-//   slug: string;
-//   price: unknown;
-//   compareAtPrice: unknown;
-//   colorway: string;
-//   images: { url: string | null }[];
-//   brand: { name: string } | null;
-// }) {
-//   return {
-//     id: p.id,
-//     name: p.name,
-//     slug: p.slug,
-//     price: Number(p.price),
-//     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
-//     colorway: p.colorway,
-//     image: p.images[0]?.url ?? null,
-//     brandName: p.brand?.name ?? null,
-//   };
-// }
 function mapPromoProduct(p: {
   id: number;
   name: string;
@@ -254,55 +227,59 @@ export default async function HomePage() {
         <section className="relative isolate overflow-hidden">
           <Image
             src={HERO_BANNER_IMAGE}
-            alt=""
+            alt="Nosepin House jewellery collection in Nepal"
             fill
             priority
             sizes="100vw"
             className="object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-900/70 to-primary-900/30" />
 
           <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:py-36 lg:px-8">
-            <div className="max-w-xl text-center lg:text-left">
+            <div className="max-w-2xl text-center lg:text-left">
               <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                Wellness, Naturally
+                Elegant Jewellery in Nepal
               </span>
+
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Live Well with <span className="text-secondary-300">DXN</span>
+                Discover Jewellery That
+                <span className="text-secondary-300"> Completes Your Look</span>
               </h1>
-              <p className="mx-auto mt-5 max-w-md text-lg text-primary-50 lg:mx-0">
-                Ganoderma-infused coffee, spirulina supplements, and personal
-                care — delivered to your door with Cash on Delivery available.
+
+              <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-primary-50 lg:mx-0">
+                Explore beautiful nosepins, earrings, necklaces, rings, bangles,
+                bracelets, anklets, and jewellery sets at Nosepin House.
+                Discover elegant jewellery for everyday style, weddings,
+                celebrations, and special occasions across Nepal.
               </p>
-              <div className="mt-8 flex justify-center gap-3 lg:justify-start">
+
+              <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
                 <Link
                   href="/jewellery"
                   className="rounded-full bg-secondary-500 px-7 py-3.5 text-sm font-semibold text-white shadow-soft transition-all hover:bg-secondary-600 hover:shadow-soft-lg"
                 >
-                  Shop Now
+                  Shop Jewellery
                 </Link>
+
                 <Link
                   href="/jewellery"
                   className="rounded-full border border-white/30 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
                 >
-                  Explore Jewellery
+                  Explore Collection
                 </Link>
               </div>
             </div>
           </div>
         </section>
       )}
-
       <CategoryGrid
         title="Jewellery Categories"
         items={categories}
         hrefFor={(slug) => `/jewellery?category=${slug}`}
       />
-
       <BestSellers products={products} />
-
       <MarqueeBar />
-
       <PromoProductColumns
         columns={[
           { title: "New Arrivals", products: newArrivals },
@@ -310,7 +287,6 @@ export default async function HomePage() {
           { title: "Trending Now", products: trendingProducts },
         ]}
       />
-
       <PromoProductColumns
         columns={[
           { title: "Special Products", products: specialProducts },
@@ -318,9 +294,8 @@ export default async function HomePage() {
           { title: "Flash Products", products: flashProducts },
         ]}
       />
-
+      <GoogleReviews />
       <WhyNosepin />
-
       <StatsSection />
     </div>
   );

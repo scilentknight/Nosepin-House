@@ -18,7 +18,7 @@ export function Logo({
         style={{ width: iconSize, height: iconSize }}
       >
         <Image
-          src="/nosepin-logo.png"
+          src="/logo.png"
           alt="NOSEPIN"
           fill
           sizes={`${iconSize}px`}

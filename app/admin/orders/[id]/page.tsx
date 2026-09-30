@@ -38,7 +38,12 @@ interface AdminOrderDetail {
   refunded: boolean;
   user: { name: string; email: string; phone: string | null };
   items: { id: string; name: string; price: number; quantity: number }[];
-  history: { id: string; status: string; note: string | null; createdAt: string }[];
+  history: {
+    id: string;
+    status: string;
+    note: string | null;
+    createdAt: string;
+  }[];
 }
 
 export default function AdminOrderDetailPage() {
@@ -68,12 +73,17 @@ export default function AdminOrderDetailPage() {
 
   return (
     <div>
-      <Link href="/admin/orders" className="text-sm text-sky-600 hover:underline">
+      <Link
+        href="/admin/orders"
+        className="text-sm text-sky-600 hover:underline"
+      >
         ← Back to Orders
       </Link>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-gray-900">{order.orderNumber}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {order.orderNumber}
+        </h1>
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={`/api/admin/orders/${order.id}/invoice?mode=preview`}
@@ -92,12 +102,16 @@ export default function AdminOrderDetailPage() {
           <StatusBadge status={order.status} />
         </div>
       </div>
-      <p className="text-sm text-gray-500">Placed {formatDate(order.placedAt)}</p>
+      <p className="text-sm text-gray-500">
+        Placed {formatDate(order.placedAt)}
+      </p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-soft">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Items</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Items
+            </h2>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[420px] text-left text-sm">
                 <thead className="text-xs uppercase text-gray-500">
@@ -113,8 +127,12 @@ export default function AdminOrderDetailPage() {
                     <tr key={item.id}>
                       <td className="py-2 text-gray-800">{item.name}</td>
                       <td className="py-2 text-gray-600">{item.quantity}</td>
-                      <td className="py-2 text-right text-gray-600">{formatPrice(item.price)}</td>
-                      <td className="py-2 text-right text-gray-900">{formatPrice(item.price * item.quantity)}</td>
+                      <td className="py-2 text-right text-gray-600">
+                        {formatPrice(item.price)}
+                      </td>
+                      <td className="py-2 text-right text-gray-900">
+                        {formatPrice(item.price * item.quantity)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -133,7 +151,11 @@ export default function AdminOrderDetailPage() {
               )}
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span>{order.shippingFee > 0 ? formatPrice(order.shippingFee) : "Free"}</span>
+                <span>
+                  {order.shippingFee > 0
+                    ? formatPrice(order.shippingFee)
+                    : "Free"}
+                </span>
               </div>
               {order.tax > 0 && (
                 <div className="flex justify-between text-gray-600">
@@ -149,7 +171,9 @@ export default function AdminOrderDetailPage() {
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-soft">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Manage Status</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Manage Status
+            </h2>
             <div className="mt-3">
               <OrderStatusActions
                 orderId={order.id}
@@ -166,7 +190,9 @@ export default function AdminOrderDetailPage() {
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-soft">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Order Timeline</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Order Timeline
+            </h2>
             <div className="mt-3">
               <OrderStatusTimeline history={order.history} />
             </div>
@@ -175,21 +201,28 @@ export default function AdminOrderDetailPage() {
 
         <div className="space-y-6">
           <section className="rounded-xl border border-gray-200 bg-white p-5 text-sm shadow-soft">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Customer</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Customer
+            </h2>
             <p className="mt-2 text-gray-800">{order.user.name}</p>
             <p className="text-gray-500">{order.user.email}</p>
-            {order.user.phone && <p className="text-gray-500">{order.user.phone}</p>}
+            {order.user.phone && (
+              <p className="text-gray-500">{order.user.phone}</p>
+            )}
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 text-sm shadow-soft">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Shipping Address</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Shipping Address
+            </h2>
             <p className="mt-2 text-gray-800">{order.fullName}</p>
             <p className="text-gray-600">
               {order.line1}
               {order.line2 ? `, ${order.line2}` : ""}
             </p>
             <p className="text-gray-600">
-              {order.city}, {order.state}{order.postalCode ? ` ${order.postalCode}` : ""}, {order.country}
+              {order.city}, {order.state}
+              {order.postalCode ? ` ${order.postalCode}` : ""}, {order.country}
             </p>
             <p className="text-gray-500">
               {order.phone} · {order.email}
@@ -197,7 +230,9 @@ export default function AdminOrderDetailPage() {
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 text-sm shadow-soft">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payment</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Payment
+            </h2>
             <div className="mt-2 flex justify-between">
               <span className="text-gray-500">Method</span>
               <span className="text-gray-900">
