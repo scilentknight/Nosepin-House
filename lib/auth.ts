@@ -26,6 +26,13 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isValid) return null;
 
+        // Prevent login for unverified accounts, but don't lock out legacy users.
+        // Legacy users will have `emailVerified = null` and `verificationCode = null`.
+        // New unverified users will have a `verificationCode`.
+        if (!user.emailVerified && user.verificationCode) {
+          throw new Error("Please verify your email before logging in.");
+        }
+
         return {
           id: user.id,
           name: user.name,

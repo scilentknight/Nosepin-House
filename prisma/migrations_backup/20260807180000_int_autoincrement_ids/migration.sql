@@ -391,7 +391,7 @@ CREATE TABLE `EmailSettings` (
     `smtpUser` VARCHAR(191) NULL,
     `smtpPassword` VARCHAR(191) NULL,
     `secure` BOOLEAN NOT NULL DEFAULT false,
-    `fromName` VARCHAR(191) NOT NULL DEFAULT 'DXN',
+    `fromName` VARCHAR(191) NOT NULL DEFAULT 'NOSEPIN HOUSE',
     `fromEmail` VARCHAR(191) NULL,
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -417,7 +417,7 @@ CREATE TABLE `PaymentSettings` (
 -- CreateTable
 CREATE TABLE `InvoiceSettings` (
     `id` VARCHAR(191) NOT NULL DEFAULT 'singleton',
-    `companyName` VARCHAR(191) NOT NULL DEFAULT 'DXN',
+    `companyName` VARCHAR(191) NOT NULL DEFAULT 'NOSEPIN HOUSE PVT. LTD.',
     `addressLine1` VARCHAR(191) NULL,
     `addressLine2` VARCHAR(191) NULL,
     `phone` VARCHAR(191) NULL,
