@@ -18,7 +18,7 @@ interface InvoiceSettingsValues {
 }
 
 const EMPTY: InvoiceSettingsValues = {
-  companyName: "DXN",
+  companyName: "NOSEPIN HOUSE",
   addressLine1: "",
   addressLine2: "",
   phone: "",

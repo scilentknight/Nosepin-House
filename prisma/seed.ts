@@ -22,8 +22,16 @@ const IMAGE_POOL: Record<string, string[]> = {
     "1550572017-edd951b55104",
     "1471864190281-a93a3070b6de",
   ],
-  "personal-care": ["1616394584738-fc6e612e71b9", "1607006344380-b6775a0824a7", "1608571423902-eed4a5ad8108"],
-  beverages: ["1600271886742-f049cd451bba", "1544787219-7f47ccb76574", "1571934811356-5cc061b6821f"],
+  "personal-care": [
+    "1616394584738-fc6e612e71b9",
+    "1607006344380-b6775a0824a7",
+    "1608571423902-eed4a5ad8108",
+  ],
+  beverages: [
+    "1600271886742-f049cd451bba",
+    "1544787219-7f47ccb76574",
+    "1571934811356-5cc061b6821f",
+  ],
 };
 
 const ALL_PHOTO_IDS = Object.values(IMAGE_POOL).flat();
@@ -43,7 +51,8 @@ async function getCachedImage(photoId: string): Promise<string> {
   } catch {
     const url = `https://images.unsplash.com/photo-${photoId}?w=1200&q=80&auto=format&fit=crop`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to download image ${photoId}: ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Failed to download image ${photoId}: ${res.status}`);
     const buffer = Buffer.from(await res.arrayBuffer());
     await fs.writeFile(cachePath, buffer);
   }
@@ -52,7 +61,11 @@ async function getCachedImage(photoId: string): Promise<string> {
   return cachePath;
 }
 
-async function assignImage(photoId: string, folder: string, filename: string): Promise<string> {
+async function assignImage(
+  photoId: string,
+  folder: string,
+  filename: string,
+): Promise<string> {
   const cachePath = await getCachedImage(photoId);
   const destDir = path.join(process.cwd(), "public", "uploads", folder);
   await fs.mkdir(destDir, { recursive: true });
@@ -130,15 +143,23 @@ interface ProductTemplate {
 }
 
 const PRODUCT_TEMPLATES: ProductTemplate[] = [
-  ...["Classic", "Mocha", "Hazelnut", "Vanilla", "Extra Strength", "Decaf"].map((suffix, i) => ({
-    leafSlug: "coffee-3-in-1",
-    parentSlug: "ganoderma-coffee",
-    suffix,
-    basePrice: 780 + i * 40,
-    colorway: "amber",
-    tags: ["coffee", "ganoderma", "3-in-1"],
-  })),
-  ...["Original", "Extra Bold", "Mild Roast", "Dark Roast", "Single Origin"].map((suffix, i) => ({
+  ...["Classic", "Mocha", "Hazelnut", "Vanilla", "Extra Strength", "Decaf"].map(
+    (suffix, i) => ({
+      leafSlug: "coffee-3-in-1",
+      parentSlug: "ganoderma-coffee",
+      suffix,
+      basePrice: 780 + i * 40,
+      colorway: "amber",
+      tags: ["coffee", "ganoderma", "3-in-1"],
+    }),
+  ),
+  ...[
+    "Original",
+    "Extra Bold",
+    "Mild Roast",
+    "Dark Roast",
+    "Single Origin",
+  ].map((suffix, i) => ({
     leafSlug: "coffee-black",
     parentSlug: "ganoderma-coffee",
     suffix,
@@ -146,7 +167,13 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
     colorway: "amber",
     tags: ["coffee", "ganoderma", "black-coffee"],
   })),
-  ...["250mg (100ct)", "250mg (250ct)", "500mg (100ct)", "500mg (250ct)", "500mg (500ct)"].map((suffix, i) => ({
+  ...[
+    "250mg (100ct)",
+    "250mg (250ct)",
+    "500mg (100ct)",
+    "500mg (250ct)",
+    "500mg (500ct)",
+  ].map((suffix, i) => ({
     leafSlug: "spirulina-tablets",
     parentSlug: "spirulina-supplements",
     suffix: `Tablets ${suffix}`,
@@ -162,7 +189,13 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
     colorway: "green",
     tags: ["spirulina", "supplement", "capsules"],
   })),
-  ...["Toothpaste", "Mouthwash", "Toothbrush Set", "Whitening Gel", "Kids Toothpaste"].map((suffix, i) => ({
+  ...[
+    "Toothpaste",
+    "Mouthwash",
+    "Toothbrush Set",
+    "Whitening Gel",
+    "Kids Toothpaste",
+  ].map((suffix, i) => ({
     leafSlug: "personal-care-oral",
     parentSlug: "personal-care",
     suffix,
@@ -170,7 +203,13 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
     colorway: "blue",
     tags: ["oral-care", "ganozhi"],
   })),
-  ...["Shampoo", "Conditioner", "Hair Oil", "Anti-Dandruff Shampoo", "Hair Serum"].map((suffix, i) => ({
+  ...[
+    "Shampoo",
+    "Conditioner",
+    "Hair Oil",
+    "Anti-Dandruff Shampoo",
+    "Hair Serum",
+  ].map((suffix, i) => ({
     leafSlug: "personal-care-hair",
     parentSlug: "personal-care",
     suffix,
@@ -178,7 +217,13 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
     colorway: "blue",
     tags: ["hair-care", "ganozhi"],
   })),
-  ...["Herbal Soap", "Face Wash", "Body Lotion", "Face Cream", "Body Scrub"].map((suffix, i) => ({
+  ...[
+    "Herbal Soap",
+    "Face Wash",
+    "Body Lotion",
+    "Face Cream",
+    "Body Scrub",
+  ].map((suffix, i) => ({
     leafSlug: "personal-care-skin",
     parentSlug: "personal-care",
     suffix,
@@ -186,7 +231,13 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
     colorway: "green",
     tags: ["skin-care", "ganozhi"],
   })),
-  ...["Black Tea", "Green Tea", "Herbal Tea", "Iced Tea Mix", "Chamomile Tea"].map((suffix, i) => ({
+  ...[
+    "Black Tea",
+    "Green Tea",
+    "Herbal Tea",
+    "Iced Tea Mix",
+    "Chamomile Tea",
+  ].map((suffix, i) => ({
     leafSlug: "beverages-tea",
     parentSlug: "beverages",
     suffix,
@@ -194,7 +245,13 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
     colorway: "red",
     tags: ["tea", "beverage"],
   })),
-  ...["Roselle Concentrate", "Mixed Berry", "Aloe Vera", "Pomegranate", "Ginger Lemon"].map((suffix, i) => ({
+  ...[
+    "Roselle Concentrate",
+    "Mixed Berry",
+    "Aloe Vera",
+    "Pomegranate",
+    "Ginger Lemon",
+  ].map((suffix, i) => ({
     leafSlug: "beverages-juice",
     parentSlug: "beverages",
     suffix,
@@ -207,16 +264,27 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
 async function seedAdminAndCoupon() {
   const passwordHash = await bcrypt.hash("Admin@123", 10);
   await prisma.user.upsert({
-    where: { email: "admin@dxn.com" },
+    where: { email: "admin@nosepinhouse.com" },
     update: { name: "Store Admin" },
-    create: { name: "Store Admin", email: "admin@dxn.com", passwordHash, role: "ADMIN" },
+    create: {
+      name: "Store Admin",
+      email: "admin@nosepinhouse.com",
+      passwordHash,
+      role: "ADMIN",
+    },
   });
-  console.log("Seeded admin user: admin@dxn.com / Admin@123");
+  console.log("Seeded admin user: admin@nosepinhouse.com / Admin@123");
 
   await prisma.coupon.upsert({
     where: { code: "WELCOME10" },
     update: {},
-    create: { code: "WELCOME10", type: "PERCENT", value: 10, minOrderAmount: 1000, active: true },
+    create: {
+      code: "WELCOME10",
+      type: "PERCENT",
+      value: 10,
+      minOrderAmount: 1000,
+      active: true,
+    },
   });
   console.log("Seeded coupon: WELCOME10 (10% off orders over Rs. 1000)");
 }
@@ -227,12 +295,26 @@ async function seedCategories(): Promise<Record<string, number>> {
 
   for (const parent of CATEGORY_TREE) {
     const pool = IMAGE_POOL[parent.slug];
-    const image = await assignImage(pool[0], "categories", `${parent.slug}.jpg`);
-    const bannerImage = await assignImage(pool[pool.length - 1], "categories", `${parent.slug}-banner.jpg`);
+    const image = await assignImage(
+      pool[0],
+      "categories",
+      `${parent.slug}.jpg`,
+    );
+    const bannerImage = await assignImage(
+      pool[pool.length - 1],
+      "categories",
+      `${parent.slug}-banner.jpg`,
+    );
 
     const created = await prisma.category.upsert({
       where: { slug: parent.slug },
-      update: { name: parent.name, image, bannerImage, sortOrder, status: "ACTIVE" },
+      update: {
+        name: parent.name,
+        image,
+        bannerImage,
+        sortOrder,
+        status: "ACTIVE",
+      },
       create: {
         name: parent.name,
         slug: parent.slug,
@@ -248,10 +330,19 @@ async function seedCategories(): Promise<Record<string, number>> {
 
     let childOrder = 0;
     for (const child of parent.children) {
-      const childImage = await assignImage(pick(pool, childOrder + 1), "categories", `${child.slug}.jpg`);
+      const childImage = await assignImage(
+        pick(pool, childOrder + 1),
+        "categories",
+        `${child.slug}.jpg`,
+      );
       const createdChild = await prisma.category.upsert({
         where: { slug: child.slug },
-        update: { name: child.name, image: childImage, parentCategoryId: created.id, sortOrder: childOrder },
+        update: {
+          name: child.name,
+          image: childImage,
+          parentCategoryId: created.id,
+          sortOrder: childOrder,
+        },
         create: {
           name: child.name,
           slug: child.slug,
@@ -266,7 +357,9 @@ async function seedCategories(): Promise<Record<string, number>> {
     }
   }
 
-  console.log(`Seeded ${Object.keys(categoryIds).length} categories (with parent/child tree)`);
+  console.log(
+    `Seeded ${Object.keys(categoryIds).length} categories (with parent/child tree)`,
+  );
   return categoryIds;
 }
 
@@ -274,9 +367,20 @@ async function seedBrands(): Promise<number[]> {
   const brandIds: number[] = [];
   for (let i = 0; i < BRAND_NAMES.length; i++) {
     const name = BRAND_NAMES[i];
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    const logo = await assignImage(pick(ALL_PHOTO_IDS, i), "brands", `${slug}-logo.jpg`);
-    const banner = await assignImage(pick(ALL_PHOTO_IDS, i + 3), "brands", `${slug}-banner.jpg`);
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const logo = await assignImage(
+      pick(ALL_PHOTO_IDS, i),
+      "brands",
+      `${slug}-logo.jpg`,
+    );
+    const banner = await assignImage(
+      pick(ALL_PHOTO_IDS, i + 3),
+      "brands",
+      `${slug}-banner.jpg`,
+    );
 
     const brand = await prisma.brand.upsert({
       where: { slug },
@@ -298,7 +402,10 @@ async function seedBrands(): Promise<number[]> {
   return brandIds;
 }
 
-async function seedProducts(categoryIds: Record<string, number>, brandIds: number[]) {
+async function seedProducts(
+  categoryIds: Record<string, number>,
+  brandIds: number[],
+) {
   let created = 0;
 
   for (let i = 0; i < PRODUCT_TEMPLATES.length; i++) {
@@ -316,15 +423,23 @@ async function seedProducts(categoryIds: Record<string, number>, brandIds: numbe
     const status: "DRAFT" | "PUBLISHED" | "ARCHIVED" = randomBool(0.08)
       ? "DRAFT"
       : randomBool(0.04)
-      ? "ARCHIVED"
-      : "PUBLISHED";
+        ? "ARCHIVED"
+        : "PUBLISHED";
 
     const pool = IMAGE_POOL[tpl.parentSlug];
-    const featuredImage = await assignImage(pick(pool, i), "products", `${slug}-featured.jpg`);
+    const featuredImage = await assignImage(
+      pick(pool, i),
+      "products",
+      `${slug}-featured.jpg`,
+    );
     const galleryCount = randomInt(2, 3);
     const gallery = [];
     for (let g = 0; g < galleryCount; g++) {
-      const url = await assignImage(pick(pool, i + g + 1), "products", `${slug}-${g + 1}.jpg`);
+      const url = await assignImage(
+        pick(pool, i + g + 1),
+        "products",
+        `${slug}-${g + 1}.jpg`,
+      );
       gallery.push({ url, alt: `${name} photo ${g + 1}`, sortOrder: g });
     }
 
@@ -375,7 +490,9 @@ async function seedProducts(categoryIds: Record<string, number>, brandIds: numbe
     });
 
     await prisma.productImage.deleteMany({ where: { productId: product.id } });
-    await prisma.productImage.createMany({ data: gallery.map((g) => ({ ...g, productId: product.id })) });
+    await prisma.productImage.createMany({
+      data: gallery.map((g) => ({ ...g, productId: product.id })),
+    });
 
     created += 1;
   }
@@ -400,18 +517,28 @@ async function seedProductVariants() {
       prisma.attributeValue.upsert({
         where: { attributeId_value: { attributeId: colorAttribute.id, value } },
         update: {},
-        create: { attributeId: colorAttribute.id, value, slug: value.toLowerCase(), sortOrder: i },
-      })
-    )
+        create: {
+          attributeId: colorAttribute.id,
+          value,
+          slug: value.toLowerCase(),
+          sortOrder: i,
+        },
+      }),
+    ),
   );
   const sizeValues = await Promise.all(
     ["Small", "Medium", "Large"].map((value, i) =>
       prisma.attributeValue.upsert({
         where: { attributeId_value: { attributeId: sizeAttribute.id, value } },
         update: {},
-        create: { attributeId: sizeAttribute.id, value, slug: value.toLowerCase(), sortOrder: i },
-      })
-    )
+        create: {
+          attributeId: sizeAttribute.id,
+          value,
+          slug: value.toLowerCase(),
+          sortOrder: i,
+        },
+      }),
+    ),
   );
 
   // Spread variants across every category (not just personal care) so the variant
@@ -443,7 +570,12 @@ async function seedProductVariants() {
             costPrice: product.costPrice,
             stockQuantity: randomInt(5, 40),
             status: "ACTIVE",
-            attributeValues: { create: [{ attributeValueId: color.id }, { attributeValueId: size.id }] },
+            attributeValues: {
+              create: [
+                { attributeValueId: color.id },
+                { attributeValueId: size.id },
+              ],
+            },
           },
         });
         variantCount += 1;
@@ -451,17 +583,20 @@ async function seedProductVariants() {
     }
   }
 
-  console.log(`Seeded ${variantCount} product variants across ${variantProducts.length} products`);
+  console.log(
+    `Seeded ${variantCount} product variants across ${variantProducts.length} products`,
+  );
 }
 
 async function seedHomeBanners() {
   const slides = [
     {
-      title: "Live Well with DXN",
-      subtitle: "Ganoderma coffee, spirulina & natural wellness essentials",
+      title: "Elegance Made to Shine",
+      subtitle:
+        "Discover beautiful jewellery crafted to make every occasion special",
       image: "/images/hero-banner.jpg",
       linkUrl: "/shop",
-      buttonText: "Shop Now",
+      buttonText: "Shop Jewellery",
       sortOrder: 0,
     },
     {
@@ -475,7 +610,9 @@ async function seedHomeBanners() {
   ];
 
   for (const slide of slides) {
-    const existing = await prisma.homeBannerSlide.findFirst({ where: { title: slide.title } });
+    const existing = await prisma.homeBannerSlide.findFirst({
+      where: { title: slide.title },
+    });
     if (existing) continue;
     await prisma.homeBannerSlide.create({ data: { ...slide, active: true } });
   }
@@ -511,7 +648,9 @@ async function seedShippingAndTax() {
     create: { country: "Nepal", label: "VAT", percent: 13 },
   });
 
-  console.log("Seeded shipping zones (Nepal + International) and Nepal VAT (13%)");
+  console.log(
+    "Seeded shipping zones (Nepal + International) and Nepal VAT (13%)",
+  );
 }
 
 interface AddressBookProvinceRaw {
@@ -527,7 +666,11 @@ interface AddressBookMunicipalityRaw {
   id: number;
   districtId: number;
   name: string;
-  municipalityType: "METROPOLITAN" | "SUB_METROPOLITAN" | "MUNICIPALITY" | "RURAL_MUNICIPALITY";
+  municipalityType:
+    | "METROPOLITAN"
+    | "SUB_METROPOLITAN"
+    | "MUNICIPALITY"
+    | "RURAL_MUNICIPALITY";
   wardCount: number;
 }
 
@@ -538,7 +681,10 @@ async function seedAddressBook() {
     return;
   }
 
-  const raw = await fs.readFile(path.join(process.cwd(), "prisma", "data", "nepal-address-book.json"), "utf-8");
+  const raw = await fs.readFile(
+    path.join(process.cwd(), "prisma", "data", "nepal-address-book.json"),
+    "utf-8",
+  );
   const { provinces, districts, municipalities } = JSON.parse(raw) as {
     provinces: AddressBookProvinceRaw[];
     districts: AddressBookDistrictRaw[];
@@ -547,7 +693,9 @@ async function seedAddressBook() {
 
   const provinceIdMap = new Map<number, number>();
   for (const p of provinces) {
-    const created = await prisma.addressBook.create({ data: { level: "PROVINCE", name: p.name } });
+    const created = await prisma.addressBook.create({
+      data: { level: "PROVINCE", name: p.name },
+    });
     provinceIdMap.set(p.id, created.id);
   }
 
@@ -555,7 +703,9 @@ async function seedAddressBook() {
   for (const d of districts) {
     const parentId = provinceIdMap.get(d.provinceId);
     if (!parentId) continue;
-    const created = await prisma.addressBook.create({ data: { level: "DISTRICT", name: d.name, parentId } });
+    const created = await prisma.addressBook.create({
+      data: { level: "DISTRICT", name: d.name, parentId },
+    });
     districtIdMap.set(d.id, created.id);
   }
 
@@ -574,7 +724,7 @@ async function seedAddressBook() {
   }
 
   console.log(
-    `Seeded AddressBook: ${provinces.length} provinces, ${districts.length} districts, ${municipalities.length} municipalities`
+    `Seeded AddressBook: ${provinces.length} provinces, ${districts.length} districts, ${municipalities.length} municipalities`,
   );
 }
 
@@ -584,15 +734,21 @@ async function seedAddressBook() {
  * NOT-NULL schema, so its normal model API can't deserialize a row that's still mid-migration.
  */
 async function backfillLegacyAddresses() {
-  const rows = await prisma.$queryRawUnsafe<{ id: number }[]>("SELECT id FROM `Address` WHERE `provinceId` IS NULL");
+  const rows = await prisma.$queryRawUnsafe<{ id: number }[]>(
+    "SELECT id FROM `Address` WHERE `provinceId` IS NULL",
+  );
   if (rows.length === 0) return;
 
-  const bagmati = await prisma.addressBook.findFirst({ where: { level: "PROVINCE", name: "Bagmati Province" } });
+  const bagmati = await prisma.addressBook.findFirst({
+    where: { level: "PROVINCE", name: "Bagmati Province" },
+  });
   const kathmandu = await prisma.addressBook.findFirst({
     where: { level: "MUNICIPALITY", name: "Kathmandu Metropolitan City" },
   });
   if (!bagmati || !kathmandu) {
-    console.warn("Could not find Bagmati Province / Kathmandu Metropolitan City to backfill legacy addresses");
+    console.warn(
+      "Could not find Bagmati Province / Kathmandu Metropolitan City to backfill legacy addresses",
+    );
     return;
   }
 
@@ -601,9 +757,11 @@ async function backfillLegacyAddresses() {
       "UPDATE `Address` SET `provinceId` = ?, `municipalityId` = ?, `wardNo` = 1 WHERE `id` = ?",
       bagmati.id,
       kathmandu.id,
-      row.id
+      row.id,
     );
-    console.log(`Backfilled legacy address #${row.id} -> Bagmati Province / Kathmandu Metropolitan City / Ward 1`);
+    console.log(
+      `Backfilled legacy address #${row.id} -> Bagmati Province / Kathmandu Metropolitan City / Ward 1`,
+    );
   }
 }
 

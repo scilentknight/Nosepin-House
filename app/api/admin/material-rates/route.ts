@@ -2,7 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { ok, fail, handleApiError } from "@/lib/api";
 import { recalculateAffectedProducts } from "@/lib/jewellery/recalculate-products";
-import { getAllDerivedPurityRatesForMaterial, parseDateOnly } from "@/lib/jewellery/rate-calculator";
+import {
+  getAllDerivedPurityRatesForMaterial,
+  parseDateOnly,
+} from "@/lib/jewellery/rate-calculator";
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +35,10 @@ export async function GET(request: Request) {
 
       const materialRateSummaries = await Promise.all(
         materials.map(async (mat) => {
-          const derived = await getAllDerivedPurityRatesForMaterial(mat.id, targetDate);
+          const derived = await getAllDerivedPurityRatesForMaterial(
+            mat.id,
+            targetDate,
+          );
           return {
             materialId: mat.id,
             materialName: mat.name,
@@ -66,10 +72,7 @@ export async function GET(request: Request) {
         material: true,
         purity: true,
       },
-      orderBy: [
-        { rateDate: "desc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ rateDate: "desc" }, { createdAt: "desc" }],
     });
 
     const formatted = historyRates.map((r) => ({
@@ -169,10 +172,50 @@ export async function POST(request: Request) {
     });
 
     // Recalculate affected products using new base rate
-    const recalculationResult = await recalculateAffectedProducts(materialId);
+    // const recalculationResult = await recalculateAffectedProducts(materialId);
+    function isEffectiveDate(date: Date) {
+      const today = new Date();
 
+      const todayDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+      );
+
+      const effectiveDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      );
+
+      return effectiveDate <= todayDate;
+    }
+    const today = new Date();
+
+    let recalculationResult = {
+      total: 0,
+      updatedCount: 0,
+      skippedCount: 0,
+      skippedProductIds: [] as number[],
+      errors: [] as {
+        productId: number;
+        productName: string;
+        message: string;
+      }[],
+    };
+
+    if (rateDate <= today) {
+      recalculationResult = await recalculateAffectedProducts(
+        materialId,
+        undefined,
+        rateDate,
+      );
+    }
     // Get all derived rates for display response
-    const derivedSummary = await getAllDerivedPurityRatesForMaterial(materialId, rateDate);
+    const derivedSummary = await getAllDerivedPurityRatesForMaterial(
+      materialId,
+      rateDate,
+    );
 
     return ok(
       {

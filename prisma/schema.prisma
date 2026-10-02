@@ -1,4 +1,4 @@
-// Prisma schema for the DXN e-commerce platform
+// Prisma schema for the NOSEPIN HOUSE e-commerce platform
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -106,6 +106,12 @@ model User {
   passwordHash String
   phone        String?
   role         Role     @default(USER)
+
+  // Email verification
+  emailVerified             DateTime?
+  verificationCode          String?
+  verificationCodeExpiresAt DateTime?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -753,7 +759,7 @@ model EmailSettings {
   smtpUser     String?
   smtpPassword String?
   secure       Boolean  @default(false)
-  fromName     String   @default("DXN")
+  fromName     String   @default("NOSEPIN HOUSE")
   fromEmail    String?
   updatedAt    DateTime @updatedAt
 }
@@ -774,7 +780,7 @@ model PaymentSettings {
 
 model InvoiceSettings {
   id            String   @id @default("singleton")
-  companyName   String   @default("DXN")
+  companyName   String   @default("NOSEPIN HOUSE")
   addressLine1  String?
   addressLine2  String?
   phone         String?

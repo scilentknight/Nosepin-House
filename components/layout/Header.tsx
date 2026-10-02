@@ -767,6 +767,31 @@ export function Header() {
 
   const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
 
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(target)
+      ) {
+        const details = profileDropdownRef.current.querySelector("details");
+
+        if (details) {
+          details.removeAttribute("open");
+        }
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   /* ---------------------------------------------------------
      LOAD CATEGORIES
   --------------------------------------------------------- */
@@ -857,6 +882,20 @@ export function Header() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+
+    const parts = name.trim().split(/\s+/);
+
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase();
+    }
+
+    return (
+      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+    ).toUpperCase();
+  };
 
   return (
     <>
@@ -959,7 +998,10 @@ export function Header() {
 
               {/* ACCOUNT */}
 
-              <div className="relative hidden lg:block">
+              <div
+                ref={profileDropdownRef}
+                className="relative hidden lg:block"
+              >
                 {status === "loading" ? (
                   <div className="h-9 w-9 animate-pulse rounded-full bg-[#F3E9C8]" />
                 ) : session?.user ? (
@@ -979,19 +1021,40 @@ export function Header() {
                         hover:bg-[#FBF6EE]
                       "
                     >
-                      <User className="h-5 w-5" />
-
-                      <span className="max-w-[100px] truncate text-sm">
-                        {session.user.name || session.user.email || "Account"}
-                      </span>
-
-                      <ChevronDown className="h-4 w-4" />
+                      {session.user.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || "Profile"}
+                          width={36}
+                          height={36}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="
+                          flex
+                          h-10
+                          w-10
+                          items-center
+                          justify-center
+                          rounded-full
+                          bg-[#E8DDD2]
+                          text-lg
+                          font-semibold
+                          uppercase
+                          text-[#4F403B]
+                          "
+                        >
+                          {getInitials(session.user.name)}
+                        </div>
+                      )}
+                      {/* <ChevronDown className="h-4 w-4 text-[#6B5A54] transition-transform group-open:rotate-180" /> */}
                     </summary>
 
                     <div
                       className="
                         absolute
-                        right-0
+                        -right-20
                         top-full
                         z-50
                         mt-2
@@ -1040,9 +1103,10 @@ export function Header() {
                         Orders
                       </Link>
 
-                      <Link
-                        href="/admin"
-                        className="
+                      {session.user.role === "ADMIN" && (
+                        <Link
+                          href="/admin"
+                          className="
                           flex
                           items-center
                           gap-3
@@ -1053,11 +1117,11 @@ export function Header() {
                           text-[#4F403B]
                           hover:bg-[#FBF6EE]
                         "
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dashboard
-                      </Link>
-
+                        >
+                          <LayoutDashboard className="h-4 w-4" />
+                          Admin Dashboard
+                        </Link>
+                      )}
                       <div className="my-1 border-t border-[#E8DDD2]" />
 
                       <button

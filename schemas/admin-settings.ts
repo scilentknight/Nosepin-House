@@ -7,7 +7,7 @@ export const emailSettingsSchema = z.object({
   smtpUser: z.string().max(200).nullable().optional(),
   smtpPassword: z.string().max(500).nullable().optional(),
   secure: z.boolean().default(false),
-  fromName: z.string().min(1).max(150).default("DXN"),
+  fromName: z.string().min(1).max(150).default("NOSEPIN HOUSE"),
   fromEmail: z.string().email("Must be a valid email").nullable().optional().or(z.literal("")),
 });
 
@@ -32,7 +32,7 @@ export const paymentSettingsSchema = z.object({
 export type PaymentSettingsInput = z.infer<typeof paymentSettingsSchema>;
 
 export const invoiceSettingsSchema = z.object({
-  companyName: z.string().max(150).default("DXN"),
+  companyName: z.string().max(150).default("NOSEPIN HOUSE PVT. LTD."),
   addressLine1: z.string().max(200).nullable().optional(),
   addressLine2: z.string().max(200).nullable().optional(),
   phone: z.string().max(30).nullable().optional(),

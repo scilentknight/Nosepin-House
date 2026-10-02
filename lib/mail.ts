@@ -105,7 +105,7 @@ function emailLayout({ preheader, bodyHtml }: { preheader: string; bodyHtml: str
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light" />
-<title>DXN</title>
+<title>NOSEPIN HOUSE</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</div>
@@ -115,21 +115,21 @@ function emailLayout({ preheader, bodyHtml }: { preheader: string; bodyHtml: str
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(15,15,15,0.08);">
           <tr>
             <td bgcolor="${BRAND_PRIMARY}" style="background-color:${BRAND_PRIMARY};background-image:linear-gradient(135deg,${BRAND_PRIMARY},${BRAND_SECONDARY});padding:26px 32px;">
-              <span style="font-size:22px;font-weight:800;letter-spacing:0.5px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">DXN</span>
+              <span style="font-size:22px;font-weight:800;letter-spacing:0.5px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">NOSEPIN HOUSE</span>
             </td>
           </tr>
           <tr>
             <td style="padding:32px;">
               ${bodyHtml}
-            </td>
+            </td
           </tr>
           <tr>
             <td bgcolor="#fafafa" style="background-color:#fafafa;padding:20px 32px;border-top:1px solid #eeeeee;">
               <p style="margin:0;font-size:12px;line-height:18px;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;">
-                This is an automated message from DXN — please don't reply directly to this email.
+                This is an automated message from NOSEPIN HOUSE — please don't reply directly to this email.
               </p>
               <p style="margin:6px 0 0;font-size:12px;line-height:18px;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;">
-                &copy; ${year} DXN. All rights reserved.
+                &copy; ${year} NOSEPIN HOUSE. All rights reserved.
               </p>
             </td>
           </tr>
@@ -299,14 +299,14 @@ View your order: ${SITE_URL}/account/orders`;
 
   return {
     subject: `Order ${order.orderNumber} confirmed`,
-    html: emailLayout({ preheader: `Your DXN order ${order.orderNumber} is confirmed.`, bodyHtml }),
+    html: emailLayout({ preheader: `Your NOSEPIN HOUSE order ${order.orderNumber} is confirmed.`, bodyHtml }),
     text,
   };
 }
 
 export function welcomeEmail(user: { name: string }) {
   const bodyHtml = `
-    <h1 style="margin:0 0 6px;font-size:21px;color:#111827;font-family:Arial,Helvetica,sans-serif;">Welcome to DXN, ${escapeHtml(user.name)}!</h1>
+    <h1 style="margin:0 0 6px;font-size:21px;color:#111827;font-family:Arial,Helvetica,sans-serif;">Welcome to NOSEPIN HOUSE, ${escapeHtml(user.name)}!</h1>
     <p style="margin:0 0 20px;font-size:14px;line-height:21px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">
       Your account has been created successfully. We're glad to have you — explore our Ganoderma coffee, spirulina supplements,
       and natural personal care essentials, all made for everyday wellness.
@@ -315,9 +315,9 @@ export function welcomeEmail(user: { name: string }) {
   `;
 
   return {
-    subject: "Welcome to DXN",
-    html: emailLayout({ preheader: "Your DXN account is ready.", bodyHtml }),
-    text: `Hi ${user.name}, welcome to DXN! Your account has been created successfully. Start shopping: ${SITE_URL}/shop`,
+    subject: "Welcome to NOSEPIN HOUSE",
+    html: emailLayout({ preheader: "Your NOSEPIN HOUSE account is ready.", bodyHtml }),
+    text: `Hi ${user.name}, welcome to NOSEPIN HOUSE! Your account has been created successfully. Start shopping: ${SITE_URL}/shop`,
   };
 }
 
@@ -350,7 +350,7 @@ export function passwordResetEmail(resetUrl: string) {
   const bodyHtml = `
     <h1 style="margin:0 0 6px;font-size:21px;color:#111827;font-family:Arial,Helvetica,sans-serif;">Reset your password</h1>
     <p style="margin:0 0 20px;font-size:14px;line-height:21px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">
-      We received a request to reset your DXN account password. Click the button below to choose a new one —
+      We received a request to reset your NOSEPIN HOUSE account password. Click the button below to choose a new one —
       this link expires in <strong>1 hour</strong>.
     </p>
     ${button("Reset Password", resetUrl)}
@@ -360,8 +360,35 @@ export function passwordResetEmail(resetUrl: string) {
   `;
 
   return {
-    subject: "Reset your DXN password",
-    html: emailLayout({ preheader: "Reset your DXN password — link expires in 1 hour.", bodyHtml }),
+    subject: "Reset your NOSEPIN HOUSE password",
+    html: emailLayout({ preheader: "Reset your NOSEPIN HOUSE password — link expires in 1 hour.", bodyHtml }),
     text: `Reset your password: ${resetUrl} (expires in 1 hour). If you didn't request this, ignore this email.`,
+  };
+}
+
+export function otpEmail(otp: string) {
+  const bodyHtml = `
+    <h1 style="margin:0 0 6px;font-size:21px;color:#111827;font-family:Arial,Helvetica,sans-serif;">Welcome to NOSEPIN HOUSE</h1>
+    <p style="margin:0 0 20px;font-size:14px;line-height:21px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">
+      Thank you for creating your account.
+    </p>
+    <p style="margin:0 0 20px;font-size:14px;line-height:21px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">
+      Your email verification code is:
+    </p>
+    <p style="margin:0 0 20px;font-size:32px;font-weight:bold;letter-spacing:4px;color:#111827;font-family:Arial,Helvetica,sans-serif;">
+      ${escapeHtml(otp)}
+    </p>
+    <p style="margin:0 0 20px;font-size:14px;line-height:21px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">
+      This code will expire in 10 minutes.
+    </p>
+    <p style="margin:20px 0 0;font-size:12px;line-height:18px;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;">
+      If you did not create this account, you can safely ignore this email.
+    </p>
+  `;
+
+  return {
+    subject: "Your Nosepin House verification code",
+    html: emailLayout({ preheader: "Your Nosepin House verification code is " + otp, bodyHtml }),
+    text: `Welcome to Nosepin House\n\nThank you for creating your account.\n\nYour email verification code is:\n\n${otp}\n\nThis code will expire in 10 minutes.\n\nIf you did not create this account, you can safely ignore this email.`,
   };
 }

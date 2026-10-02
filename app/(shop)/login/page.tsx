@@ -135,7 +135,11 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setFormError("Invalid email or password");
+      if (result.error !== "CredentialsSignin" && result.error !== "Default") {
+        setFormError(result.error);
+      } else {
+        setFormError("Invalid email or password");
+      }
       return;
     }
 
