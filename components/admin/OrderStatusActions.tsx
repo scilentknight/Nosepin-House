@@ -27,29 +27,6 @@ export function OrderStatusActions({
   const [cancelReason, setCancelReason] = useState("");
   const [customCancelReason, setCustomCancelReason] = useState("");
 
-  // async function patchStatus(
-  //   body: Record<string, unknown>,
-  //   successMessage: string,
-  // ) {
-  //   setIsSubmitting(true);
-  //   setError(null);
-  //   const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-  //     method: "PATCH",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(body),
-  //   });
-  //   const json = await res.json();
-  //   setIsSubmitting(false);
-  //   if (!res.ok) {
-  //     const message = json.message ?? "Update failed";
-  //     setError(message);
-  //     showToast(message, "error");
-  //     return;
-  //   }
-  //   showToast(successMessage, "success");
-  //   onUpdated();
-  // }
-
   async function patchStatus(
     body: Record<string, unknown>,
     successMessage: string,
