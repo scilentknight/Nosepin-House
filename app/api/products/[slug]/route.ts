@@ -285,12 +285,18 @@ export async function GET(
           unit: item.material.unit,
         },
 
-        purity: {
-          id: item.purity.id,
-          name: item.purity.name,
-          code: item.purity.code,
-          fineness: decimalToNumber(item.purity.fineness),
-        },
+        purity: item.purity
+          ? {
+              id: item.purity.id,
+              name: item.purity.name,
+              code: item.purity.code,
+              fineness: decimalToNumber(item.purity.fineness),
+            }
+          : null,
+
+        grossWeight: decimalToNumber(item.grossWeight),
+        stoneWeight: decimalToNumber(item.stoneWeight),
+        netWeight: decimalToNumber(item.netWeight),
 
         quantity: Number(item.quantity),
 

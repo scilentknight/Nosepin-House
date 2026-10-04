@@ -11,7 +11,7 @@ const DRAFT_KEY = "bikesh-checkout-draft";
 function EsewaReturnContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { clear } = useCart();
+  const { refresh } = useCart();
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,6 +37,8 @@ function EsewaReturnContent() {
           address: draft.address,
           saveAddress: draft.saveAddress,
           couponCode: draft.couponCode,
+          // Forward selected items so the backend orders only the checked lines.
+          selectedItems: draft.selectedItems,
         }),
       });
       const json = await res.json();
@@ -47,9 +49,10 @@ function EsewaReturnContent() {
       }
 
       sessionStorage.removeItem(DRAFT_KEY);
-      await clear();
-      router.replace(`/order/success/${json.data.orderNumber}`);
-    }
+      // Use refresh() instead of clear() — clear() wipes the whole cart.
+      // refresh() re-fetches from the server so only the purchased items are gone.
+      await refresh();
+      router.replace(`/order/success/${json.data.orderNumber}`);    }
 
     complete();
     // eslint-disable-next-line react-hooks/exhaustive-deps

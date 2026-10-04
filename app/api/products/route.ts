@@ -143,7 +143,7 @@ function toProductDTO(
         name: string;
         code: string;
         fineness: unknown;
-      };
+      } | null;
     }[];
   },
   // baseUrl: string,
@@ -390,12 +390,14 @@ function toProductDTO(
           unit: item.material.unit,
         },
 
-        purity: {
-          id: item.purity.id,
-          name: item.purity.name,
-          code: item.purity.code,
-          fineness: decimalToNumber(item.purity.fineness),
-        },
+        purity: item.purity
+          ? {
+              id: item.purity.id,
+              name: item.purity.name,
+              code: item.purity.code,
+              fineness: decimalToNumber(item.purity.fineness),
+            }
+          : null,
 
         quantity: Number(item.quantity),
 

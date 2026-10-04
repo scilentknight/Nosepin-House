@@ -274,18 +274,17 @@ function toPayload(values: ProductFormValues) {
     markupValue: num(values.markupValue),
 
     materials: values.materials
-      .filter((m) => m.materialId.trim() !== "" && m.purityId.trim() !== "")
+      .filter((m) => m.materialId && m.materialId.trim() !== "")
       .map((material, index) => ({
-        materialId: material.materialId,
-
-        purityId: material.purityId,
-
-        quantity: Number(material.quantity || 0),
-
+        id: material.id,
+        materialId: material.materialId.trim(),
+        purityId: material.purityId && material.purityId.trim() !== "" ? material.purityId.trim() : null,
+        grossWeight: material.grossWeight && material.grossWeight.trim() !== "" ? Number(material.grossWeight) : null,
+        stoneWeight: material.stoneWeight && material.stoneWeight.trim() !== "" ? Number(material.stoneWeight) : null,
+        netWeight: material.netWeight && material.netWeight.trim() !== "" ? Number(material.netWeight) : null,
+        quantity: Number(material.quantity || material.netWeight || 0),
         unit: material.unit,
-
-        wastagePercent: Number(material.wastagePercent || 0),
-
+        wastagePercent: material.wastagePercent && material.wastagePercent.trim() !== "" ? Number(material.wastagePercent) : 0,
         sortOrder: index,
       })),
 

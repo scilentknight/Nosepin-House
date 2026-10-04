@@ -27,11 +27,36 @@ export interface MaterialOption {
 }
 
 export interface ProductMaterialValue {
+  id?: string;
   materialId: string;
-  purityId: string;
+  purityId?: string;
+  grossWeight?: string;
+  stoneWeight?: string;
+  netWeight?: string;
   quantity: string;
   unit: MaterialUnit;
-  wastagePercent: string;
+  wastagePercent?: string;
+  itemQuantity?: string;
+  sortOrder?: number;
+}
+
+export interface MaterialBreakdownItem {
+  id?: string;
+  materialId: string;
+  materialName?: string;
+  materialType?: MaterialType;
+  purityId?: string | null;
+  purityName?: string | null;
+  grossWeight?: number | null;
+  stoneWeight?: number | null;
+  netWeight?: number | null;
+  quantity: number;
+  unit: MaterialUnit;
+  wastagePercent?: number | null;
+  wastageWeight?: number | null;
+  chargeableQuantity?: number;
+  rate: number;
+  cost: number;
 }
 
 export interface JewelleryPricing {
@@ -48,4 +73,7 @@ export interface JewelleryPricing {
   markupAmount: number;
 
   sellingPrice: number;
+
+  materialBreakdown?: MaterialBreakdownItem[];
 }
+

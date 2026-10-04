@@ -139,24 +139,41 @@ export async function getMaterialBaseRate(
 
 /**
  * Gets the derived material rate for a specific purity of a material on targetDate.
+ * If purityId is not provided or null, returns the base rate record for the material.
  */
 export async function getDerivedMaterialRate(
   materialId: string,
-  purityId: string,
+  purityId?: string | null,
   targetDate: Date = new Date(),
 ) {
+  const baseRateRecord = await getMaterialBaseRate(materialId, targetDate);
+
+  if (!baseRateRecord) {
+    return null;
+  }
+
+  if (!purityId) {
+    return {
+      rate: baseRateRecord.rate,
+      baseRateRecord,
+      basePurity: baseRateRecord.purity,
+      targetPurity: baseRateRecord.purity,
+      unit: baseRateRecord.unit,
+    };
+  }
+
   const targetPurity = await prisma.materialPurity.findUnique({
     where: { id: purityId },
   });
 
   if (!targetPurity || targetPurity.materialId !== materialId) {
-    throw new Error(`Invalid purity record ${purityId} for material ${materialId}`);
-  }
-
-  const baseRateRecord = await getMaterialBaseRate(materialId, targetDate);
-
-  if (!baseRateRecord) {
-    return null;
+    return {
+      rate: baseRateRecord.rate,
+      baseRateRecord,
+      basePurity: baseRateRecord.purity,
+      targetPurity: baseRateRecord.purity,
+      unit: baseRateRecord.unit,
+    };
   }
 
   const derivedRate = derivePurityRate(

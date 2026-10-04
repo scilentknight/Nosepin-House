@@ -159,7 +159,11 @@ export async function recalculateAffectedProducts(
         product.materials.map((material) => ({
           materialId: material.materialId,
           purityId: material.purityId,
+          grossWeight: material.grossWeight !== null && material.grossWeight !== undefined ? Number(material.grossWeight) : null,
+          stoneWeight: material.stoneWeight !== null && material.stoneWeight !== undefined ? Number(material.stoneWeight) : null,
+          netWeight: material.netWeight !== null && material.netWeight !== undefined ? Number(material.netWeight) : null,
           quantity: Number(material.quantity),
+          unit: material.unit,
           wastagePercent: Number(material.wastagePercent ?? 0),
         })),
         Number(product.labourCharge ?? 0),

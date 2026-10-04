@@ -56,7 +56,9 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
   const [code, setCode] = useState(initialData?.code || "");
   const [type, setType] = useState(initialData?.type || "PRECIOUS_METAL");
   const [unit, setUnit] = useState(initialData?.unit || "GRAM");
-  const [description, setDescription] = useState(initialData?.description || "");
+  const [description, setDescription] = useState(
+    initialData?.description || "",
+  );
   const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
 
   const [purities, setPurities] = useState<PurityRow[]>(
@@ -71,7 +73,10 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   function addPurity() {
     setPurities([
@@ -101,7 +106,9 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
     setSaving(true);
 
     try {
-      const url = isEdit ? `/api/admin/materials/${initialData!.id}` : "/api/admin/materials";
+      const url = isEdit
+        ? `/api/admin/materials/${initialData!.id}`
+        : "/api/admin/materials";
       const method = isEdit ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -130,7 +137,10 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
         throw new Error(json.message || "Failed to save material");
       }
 
-      setMessage({ type: "success", text: json.message || "Material saved successfully!" });
+      setMessage({
+        type: "success",
+        text: json.message || "Material saved successfully!",
+      });
       setTimeout(() => {
         router.push("/admin/materials");
         router.refresh();
@@ -147,7 +157,12 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
 
   async function handleDelete() {
     if (!initialData?.id) return;
-    if (!confirm(`Are you sure you want to delete or deactivate ${initialData.name}?`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete or deactivate ${initialData.name}?`,
+      )
+    )
+      return;
 
     setDeleting(true);
     setMessage(null);
@@ -291,13 +306,21 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-soft space-y-5">
         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Purities & Grades</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Purities & Grades
+            </h2>
             <p className="mt-0.5 text-xs text-gray-500">
-              Configure available purities or grades (e.g. 24K, 22K, 18K for Gold; 925, 999 for Silver).
+              Configure available purities or grades (e.g. 24K, 22K, 18K for
+              Gold; 925, 999 for Silver).
             </p>
           </div>
 
-          <Button type="button" variant="adminOutline" size="sm" onClick={addPurity}>
+          <Button
+            type="button"
+            variant="adminOutline"
+            size="sm"
+            onClick={addPurity}
+          >
             <Plus className="h-4 w-4" />
             Add Purity
           </Button>
@@ -344,7 +367,9 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
                   step="0.000001"
                   min="0"
                   value={purity.fineness}
-                  onChange={(e) => updatePurity(index, "fineness", e.target.value)}
+                  onChange={(e) =>
+                    updatePurity(index, "fineness", e.target.value)
+                  }
                   placeholder="e.g. 0.999"
                   className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-mono text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                 />
@@ -356,7 +381,9 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
                     <input
                       type="checkbox"
                       checked={purity.isActive ?? true}
-                      onChange={(e) => updatePurity(index, "isActive", e.target.checked)}
+                      onChange={(e) =>
+                        updatePurity(index, "isActive", e.target.checked)
+                      }
                       className="h-3.5 w-3.5 rounded border-gray-300 text-slate-800"
                     />
                     Active
@@ -403,12 +430,7 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
             Cancel
           </Button>
 
-          <Button
-            type="submit"
-            variant="admin"
-            size="sm"
-            isLoading={saving}
-          >
+          <Button type="submit" variant="admin" size="sm" isLoading={saving}>
             {isEdit ? "Update Material" : "Create Material"}
           </Button>
         </div>
