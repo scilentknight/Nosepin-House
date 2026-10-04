@@ -10,6 +10,7 @@ import {
   createOrderFromCart,
   loadValidatedCart,
   resolveShippingAddress,
+  parseSelectedItems,
 } from "@/lib/checkoutCore";
 import { getPaymentSettings } from "@/lib/settings";
 
@@ -24,7 +25,8 @@ export async function POST(request: Request) {
     }
 
     const shipping = await resolveShippingAddress(user, body);
-    const cart = await loadValidatedCart(user.id);
+    const selectedItems = parseSelectedItems(body);
+    const cart = await loadValidatedCart(user.id, selectedItems);
     const subtotal = computeSubtotal(cart);
 
     const paymentSettings = await getPaymentSettings();

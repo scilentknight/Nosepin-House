@@ -6,14 +6,36 @@ const imageInputSchema = z.object({
   sortOrder: z.number().int().default(0),
 });
 
-const productMaterialInputSchema = z.object({
-  materialId: z.string().min(1, "Material is required"),
-  purityId: z.string().min(1, "Purity is required"),
-  quantity: z.number().positive("Quantity must be greater than 0"),
-  unit: z.enum(["GRAM", "KILOGRAM", "CARAT", "PIECE", "MILLIGRAM", "MILLILITER"]),
-  wastagePercent: z.number().nonnegative("Wastage percentage cannot be negative").default(0),
-  sortOrder: z.number().int().default(0),
-});
+const productMaterialInputSchema = z
+  .object({
+    id: z.string().optional(),
+    materialId: z.string().min(1, "Material is required"),
+    purityId: z.string().nullable().optional(),
+    grossWeight: z.number().nonnegative().nullable().optional(),
+    stoneWeight: z.number().nonnegative().nullable().optional(),
+    netWeight: z.number().nonnegative().nullable().optional(),
+    quantity: z.number().positive("Quantity or Net Weight must be greater than 0"),
+    unit: z.enum(["GRAM", "KILOGRAM", "CARAT", "PIECE", "MILLIGRAM", "MILLILITER"]),
+    wastagePercent: z.number().nonnegative("Wastage percentage cannot be negative").nullable().optional().default(0),
+    sortOrder: z.number().int().default(0),
+  })
+  .refine(
+    (data) => {
+      if (
+        data.grossWeight !== null &&
+        data.grossWeight !== undefined &&
+        data.stoneWeight !== null &&
+        data.stoneWeight !== undefined
+      ) {
+        return data.stoneWeight <= data.grossWeight;
+      }
+      return true;
+    },
+    {
+      message: "Stone weight cannot exceed gross weight",
+      path: ["stoneWeight"],
+    },
+  );
 
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),

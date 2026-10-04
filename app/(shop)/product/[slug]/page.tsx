@@ -1031,11 +1031,19 @@ export default async function ProductPage({
                 code: item.material.code,
               },
 
-              purity: {
-                name: item.purity.name,
-                code: item.purity.code,
-              },
+              purity: item.purity
+                ? {
+                    name: item.purity.name,
+                    code: item.purity.code,
+                  }
+                : null,
 
+              grossWeight:
+                item.grossWeight !== null ? Number(item.grossWeight) : null,
+              stoneWeight:
+                item.stoneWeight !== null ? Number(item.stoneWeight) : null,
+              netWeight:
+                item.netWeight !== null ? Number(item.netWeight) : null,
               quantity: Number(item.quantity),
 
               unit: item.unit,

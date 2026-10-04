@@ -409,19 +409,22 @@ model MaterialRate {
 }
 
 model ProductMaterial {
-  id             String         @id @default(cuid())
+  id             String          @id @default(cuid())
   productId      Int
   materialId     String
-  purityId       String
-  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  material       Material       @relation(fields: [materialId], references: [id])
-  purity         MaterialPurity @relation(fields: [purityId], references: [id])
-  quantity       Decimal        @db.Decimal(18, 6)
+  purityId       String?
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  material       Material        @relation(fields: [materialId], references: [id])
+  purity         MaterialPurity? @relation(fields: [purityId], references: [id])
+  grossWeight    Decimal?        @db.Decimal(18, 6)
+  stoneWeight    Decimal?        @db.Decimal(18, 6)
+  netWeight      Decimal?        @db.Decimal(18, 6)
+  quantity       Decimal         @db.Decimal(18, 6)
   unit           MaterialUnit
-  wastagePercent Decimal?       @db.Decimal(8, 4)
-  sortOrder      Int            @default(0)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  wastagePercent Decimal?        @db.Decimal(8, 4)
+  sortOrder      Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([productId])
   @@index([materialId])

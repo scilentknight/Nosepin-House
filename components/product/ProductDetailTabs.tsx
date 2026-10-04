@@ -11,7 +11,10 @@ interface MaterialItem {
   purity: {
     name: string;
     code: string;
-  };
+  } | null;
+  grossWeight?: number | null;
+  stoneWeight?: number | null;
+  netWeight?: number | null;
   quantity: number;
   unit: string;
   wastagePercent: number | null;
@@ -254,13 +257,18 @@ export function ProductDetailTabs({
                           </td>
 
                           <td className="px-4 py-4">
-                            <p className="font-medium text-gray-800">
-                              {item.purity.name}
-                            </p>
-
-                            <p className="text-xs text-gray-400">
-                              {item.purity.code}
-                            </p>
+                            {item.purity ? (
+                              <>
+                                <p className="font-medium text-gray-800">
+                                  {item.purity.name}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {item.purity.code}
+                                </p>
+                              </>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
                           </td>
 
                           <td className="px-4 py-4 text-gray-700">

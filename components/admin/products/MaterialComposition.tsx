@@ -1,300 +1,3 @@
-// "use client";
-
-// import { useEffect, useState } from "react";
-
-// import type {
-//   MaterialOption,
-//   ProductMaterialValue,
-// } from "@/lib/jewellery/types";
-
-// interface Props {
-//   values: ProductMaterialValue[];
-//   setValues: (values: ProductMaterialValue[]) => void;
-// }
-
-// interface DerivedRateItem {
-//   purityId: string;
-//   purityName: string;
-//   purityCode: string;
-//   fineness: number | null;
-//   isBasePurity: boolean;
-//   rate: number;
-//   unit: string;
-// }
-
-// interface MaterialRateSummary {
-//   materialId: string;
-//   derivedRates: DerivedRateItem[];
-//   baseRateRecord: {
-//     id: string;
-//     rate: number;
-//     purity: { name: string; code: string };
-//   } | null;
-// }
-
-// export function MaterialComposition({ values, setValues }: Props) {
-//   const [materials, setMaterials] = useState<MaterialOption[]>([]);
-//   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     let cancelled = false;
-
-//     async function loadData() {
-//       try {
-//         const [matRes, ratesRes] = await Promise.all([
-//           fetch("/api/admin/materials", { cache: "no-store" }),
-//           fetch("/api/admin/material-rates", { cache: "no-store" }),
-//         ]);
-
-//         if (!matRes.ok) throw new Error("Failed to load materials");
-
-//         const matJson = await matRes.json();
-//         const rateJson = ratesRes.ok ? await ratesRes.json() : { data: [] };
-
-//         if (!cancelled) {
-//           setMaterials(matJson.data ?? []);
-
-//           // /api/admin/material-rates returns materialRateSummaries:
-//           // each item has { materialId, derivedRates: [{ purityId, rate, ... }] }
-//           // We must iterate derivedRates to build the correct map.
-//           const map: Record<string, number> = {};
-//           const summaryList: MaterialRateSummary[] = rateJson.data ?? [];
-//           for (const summary of summaryList) {
-//             for (const dr of summary.derivedRates ?? []) {
-//               map[`${summary.materialId}:${dr.purityId}`] = dr.rate;
-//             }
-//           }
-//           setRatesMap(map);
-//         }
-//       } catch (error) {
-//         console.error("Failed loading materials or rates:", error);
-//       } finally {
-//         if (!cancelled) {
-//           setLoading(false);
-//         }
-//       }
-//     }
-
-//     loadData();
-
-//     return () => {
-//       cancelled = true;
-//     };
-//   }, []);
-
-//   function addMaterial() {
-//     setValues([
-//       ...values,
-//       {
-//         materialId: "",
-//         purityId: "",
-//         quantity: "",
-//         unit: "GRAM",
-//         wastagePercent: "0",
-//       },
-//     ]);
-//   }
-
-//   function removeMaterial(index: number) {
-//     setValues(values.filter((_, i) => i !== index));
-//   }
-
-//   function updateMaterial(index: number, patch: Partial<ProductMaterialValue>) {
-//     setValues(
-//       values.map((item, i) =>
-//         i === index
-//           ? {
-//               ...item,
-//               ...patch,
-//             }
-//           : item,
-//       ),
-//     );
-//   }
-
-//   if (loading) {
-//     return (
-//       <div className="rounded-xl border bg-white p-6">
-//         <p className="text-sm text-gray-500">Loading materials and daily rates...</p>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-//       <div className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
-//         <div>
-//           <h2 className="font-semibold text-gray-900">Material Composition</h2>
-//           <p className="mt-1 text-sm text-gray-500">
-//             Add every material used to manufacture this product.
-//           </p>
-//         </div>
-
-//         <button
-//           type="button"
-//           onClick={addMaterial}
-//           className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white"
-//         >
-//           + Add Material
-//         </button>
-//       </div>
-
-//       {values.length === 0 ? (
-//         <div className="p-8 text-center">
-//           <p className="text-sm text-gray-500">No materials added.</p>
-//           <button
-//             type="button"
-//             onClick={addMaterial}
-//             className="mt-3 text-sm font-medium text-slate-800 underline"
-//           >
-//             Add the first material
-//           </button>
-//         </div>
-//       ) : (
-//         <div className="divide-y overflow-x-auto">
-//           <table className="w-full text-left text-sm">
-//             <thead className="bg-gray-50 border-b text-xs uppercase font-medium text-gray-500">
-//               <tr>
-//                 <th className="px-4 py-3">Material</th>
-//                 <th className="px-4 py-3">Purity / Grade</th>
-//                 <th className="px-4 py-3">Quantity</th>
-//                 <th className="px-4 py-3">Unit</th>
-//                 <th className="px-4 py-3">Wastage %</th>
-//                 <th className="px-4 py-3 text-right">Daily Rate</th>
-//                 <th className="px-4 py-3 text-right">Line Cost</th>
-//                 <th className="px-4 py-3 text-center">Action</th>
-//               </tr>
-//             </thead>
-//             <tbody className="divide-y">
-//               {values.map((item, index) => {
-//                 const material = materials.find((m) => m.id === item.materialId);
-//                 const currentRate = item.materialId && item.purityId
-//                   ? ratesMap[`${item.materialId}:${item.purityId}`] ?? null
-//                   : null;
-
-//                 const qty = Number(item.quantity || 0);
-//                 const wastage = Number(item.wastagePercent || 0);
-//                 const adjustedQty = qty * (1 + wastage / 100);
-//                 const lineCost = currentRate !== null ? adjustedQty * currentRate : null;
-
-//                 return (
-//                   <tr key={index} className="hover:bg-gray-50/50">
-//                     <td className="p-3">
-//                       <select
-//                         value={item.materialId}
-//                         onChange={(e) => {
-//                           const selected = materials.find((m) => m.id === e.target.value);
-//                           updateMaterial(index, {
-//                             materialId: e.target.value,
-//                             purityId: "",
-//                             unit: selected?.unit ?? "GRAM",
-//                           });
-//                         }}
-//                         className="w-full rounded-lg border px-3 py-2 text-sm"
-//                       >
-//                         <option value="">Select material</option>
-//                         {materials.map((m) => (
-//                           <option key={m.id} value={m.id}>
-//                             {m.name}
-//                           </option>
-//                         ))}
-//                       </select>
-//                     </td>
-
-//                     <td className="p-3">
-//                       <select
-//                         value={item.purityId}
-//                         onChange={(e) =>
-//                           updateMaterial(index, {
-//                             purityId: e.target.value,
-//                           })
-//                         }
-//                         disabled={!material}
-//                         className="w-full rounded-lg border px-3 py-2 text-sm disabled:bg-gray-100"
-//                       >
-//                         <option value="">Select purity</option>
-//                         {material?.purities.map((p) => (
-//                           <option key={p.id} value={p.id}>
-//                             {p.name}
-//                           </option>
-//                         ))}
-//                       </select>
-//                     </td>
-
-//                     <td className="p-3">
-//                       <input
-//                         type="number"
-//                         min="0"
-//                         step="0.000001"
-//                         value={item.quantity}
-//                         onChange={(e) =>
-//                           updateMaterial(index, {
-//                             quantity: e.target.value,
-//                           })
-//                         }
-//                         placeholder="0.000"
-//                         className="w-28 rounded-lg border px-3 py-2 text-sm"
-//                       />
-//                     </td>
-
-//                     <td className="p-3 font-medium text-gray-600 text-xs">
-//                       {item.unit}
-//                     </td>
-
-//                     <td className="p-3">
-//                       <input
-//                         type="number"
-//                         min="0"
-//                         step="0.01"
-//                         value={item.wastagePercent}
-//                         onChange={(e) =>
-//                           updateMaterial(index, {
-//                             wastagePercent: e.target.value,
-//                           })
-//                         }
-//                         className="w-24 rounded-lg border px-3 py-2 text-sm"
-//                       />
-//                     </td>
-
-//                     <td className="p-3 text-right font-medium whitespace-nowrap text-sm">
-//                       {currentRate !== null ? (
-//                         `NPR ${currentRate.toLocaleString("en-NP")}`
-//                       ) : (
-//                         <span className="text-xs text-amber-600 font-normal">
-//                           {item.materialId && item.purityId ? "No active rate" : "—"}
-//                         </span>
-//                       )}
-//                     </td>
-
-//                     <td className="p-3 text-right font-semibold whitespace-nowrap text-sm text-slate-900">
-//                       {lineCost !== null ? (
-//                         `NPR ${lineCost.toLocaleString("en-NP", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-//                       ) : (
-//                         "—"
-//                       )}
-//                     </td>
-
-//                     <td className="p-3 text-center">
-//                       <button
-//                         type="button"
-//                         onClick={() => removeMaterial(index)}
-//                         className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-//                       >
-//                         Remove
-//                       </button>
-//                     </td>
-//                   </tr>
-//                 );
-//               })}
-//             </tbody>
-//           </table>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -309,29 +12,6 @@ interface Props {
   setValues: (values: ProductMaterialValue[]) => void;
 }
 
-interface DerivedRateItem {
-  purityId: string;
-  purityName: string;
-  purityCode: string;
-  fineness: number | null;
-  isBasePurity: boolean;
-  rate: number;
-  unit: string;
-}
-
-interface MaterialRateSummary {
-  materialId: string;
-  derivedRates: DerivedRateItem[];
-  baseRateRecord: {
-    id: string;
-    rate: number;
-    purity: {
-      name: string;
-      code: string;
-    };
-  } | null;
-}
-
 export function MaterialComposition({ values, setValues }: Props) {
   const [materials, setMaterials] = useState<MaterialOption[]>([]);
   const [ratesMap, setRatesMap] = useState<Record<string, number>>({});
@@ -343,17 +23,11 @@ export function MaterialComposition({ values, setValues }: Props) {
     async function loadData() {
       try {
         const [matRes, ratesRes] = await Promise.all([
-          fetch("/api/admin/materials", {
-            cache: "no-store",
-          }),
-          fetch("/api/admin/material-rates", {
-            cache: "no-store",
-          }),
+          fetch("/api/admin/materials", { cache: "no-store" }),
+          fetch("/api/admin/material-rates", { cache: "no-store" }),
         ]);
 
-        if (!matRes.ok) {
-          throw new Error("Failed to load materials");
-        }
+        if (!matRes.ok) throw new Error("Failed to load materials");
 
         const matJson = await matRes.json();
         const rateJson = ratesRes.ok ? await ratesRes.json() : { data: [] };
@@ -362,12 +36,15 @@ export function MaterialComposition({ values, setValues }: Props) {
           setMaterials(matJson.data ?? []);
 
           const map: Record<string, number> = {};
-
-          const summaryList: MaterialRateSummary[] = rateJson.data ?? [];
+          const summaryList: any[] = rateJson.data ?? [];
 
           for (const summary of summaryList) {
             for (const dr of summary.derivedRates ?? []) {
               map[`${summary.materialId}:${dr.purityId}`] = Number(dr.rate);
+            }
+            if (summary.baseRateRecord?.rate) {
+              map[`${summary.materialId}:base`] = Number(summary.baseRateRecord.rate);
+              map[summary.materialId] = Number(summary.baseRateRecord.rate);
             }
           }
 
@@ -376,14 +53,11 @@ export function MaterialComposition({ values, setValues }: Props) {
       } catch (error) {
         console.error("Failed loading materials or rates:", error);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadData();
-
     return () => {
       cancelled = true;
     };
@@ -395,6 +69,9 @@ export function MaterialComposition({ values, setValues }: Props) {
       {
         materialId: "",
         purityId: "",
+        grossWeight: "",
+        stoneWeight: "0",
+        netWeight: "",
         quantity: "",
         unit: "GRAM",
         wastagePercent: "0",
@@ -407,38 +84,121 @@ export function MaterialComposition({ values, setValues }: Props) {
   }
 
   function updateMaterial(index: number, patch: Partial<ProductMaterialValue>) {
-    setValues(
-      values.map((item, i) =>
-        i === index
-          ? {
-              ...item,
-              ...patch,
-            }
-          : item,
-      ),
-    );
+    setValues(values.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   }
+
+  function handleMaterialChange(index: number, materialId: string) {
+    const selected = materials.find((m) => m.id === materialId);
+    if (!selected) {
+      updateMaterial(index, {
+        materialId: "",
+        purityId: "",
+        unit: "GRAM",
+        grossWeight: "",
+        stoneWeight: "",
+        netWeight: "",
+        quantity: "",
+        wastagePercent: "0",
+      });
+      return;
+    }
+
+    const isPrecious = selected.type === "PRECIOUS_METAL";
+    const defaultPurityId =
+      selected.purities.length > 0 ? selected.purities[0].id : "";
+
+    updateMaterial(index, {
+      materialId,
+      purityId: defaultPurityId,
+      unit: selected.unit,
+      grossWeight: isPrecious ? "" : undefined,
+      stoneWeight: isPrecious ? "0" : undefined,
+      netWeight: isPrecious ? "" : undefined,
+      quantity: isPrecious ? "" : selected.type === "OTHER" ? "1" : "",
+      wastagePercent: "0",
+    });
+  }
+
+  function handleGrossWeightChange(index: number, grossStr: string) {
+    const row = values[index];
+    const gross = grossStr === "" ? 0 : parseFloat(grossStr) || 0;
+    const stone = row.stoneWeight === "" ? 0 : parseFloat(row.stoneWeight || "0") || 0;
+    const net = grossStr === "" ? "" : Math.max(0, gross - stone).toFixed(4);
+    updateMaterial(index, { grossWeight: grossStr, netWeight: net, quantity: net });
+  }
+
+  function handleStoneWeightChange(index: number, stoneStr: string) {
+    const row = values[index];
+    const gross =
+      row.grossWeight === "" ? 0 : parseFloat(row.grossWeight || "0") || 0;
+    const stone = stoneStr === "" ? 0 : parseFloat(stoneStr) || 0;
+    const net =
+      row.grossWeight === "" ? "" : Math.max(0, gross - stone).toFixed(4);
+    updateMaterial(index, { stoneWeight: stoneStr, netWeight: net, quantity: net });
+  }
+
+  function getRowRate(materialId: string, purityId?: string): number | null {
+    if (!materialId) return null;
+    if (purityId && ratesMap[`${materialId}:${purityId}`] !== undefined)
+      return ratesMap[`${materialId}:${purityId}`];
+    if (ratesMap[`${materialId}:base`] !== undefined)
+      return ratesMap[`${materialId}:base`];
+    if (ratesMap[materialId] !== undefined) return ratesMap[materialId];
+    return null;
+  }
+
+  function getRowLineCost(
+    item: ProductMaterialValue,
+    material?: MaterialOption,
+  ) {
+    if (!material) return null;
+    const currentRate = getRowRate(item.materialId, item.purityId);
+    if (currentRate === null) return null;
+
+    if (material.type === "PRECIOUS_METAL") {
+      const gross = parseFloat(item.grossWeight || "0") || 0;
+      const stone = parseFloat(item.stoneWeight || "0") || 0;
+      const net = Math.max(0, gross - stone);
+      const wastage = parseFloat(item.wastagePercent || "0") || 0;
+      return net * (1 + wastage / 100) * currentRate;
+    } else {
+      const qty = parseFloat(item.quantity || "0") || 0;
+      const wastage = parseFloat(item.wastagePercent || "0") || 0;
+      return qty * (1 + wastage / 100) * currentRate;
+    }
+  }
+
+  const totalCost = values.reduce((sum, item) => {
+    const material = materials.find((m) => m.id === item.materialId);
+    const cost = getRowLineCost(item, material);
+    return sum + (cost ?? 0);
+  }, 0);
+
+  const inputCls =
+    "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100";
+
+  const readOnlyCls =
+    "w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 cursor-not-allowed";
+
+  const labelCls = "text-xs font-medium uppercase tracking-wide text-gray-500";
 
   if (loading) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-soft">
-        <p className="text-sm text-gray-500">
-          Loading materials and daily rates...
-        </p>
+        <p className="text-sm text-gray-500">Loading materials and daily rates…</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-soft">
-      {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-gray-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4">
+      {/* ── Header ────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-sm font-semibold text-gray-900">
             Material Composition
           </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-0.5 text-sm text-gray-500">
             Add every material used to manufacture this product.
           </p>
         </div>
@@ -446,221 +206,291 @@ export function MaterialComposition({ values, setValues }: Props) {
         <button
           type="button"
           onClick={addMaterial}
-          className="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-100"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
         >
-          + Add Material
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-4 w-4"
+          >
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+          Add Material
         </button>
       </div>
 
-      {/* Empty state */}
-      {values.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="text-sm text-gray-500">No materials added.</p>
-
+      {/* ── Empty state ───────────────────────────────────────────── */}
+      {values.length === 0 && (
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center shadow-soft">
+          <p className="text-sm font-medium text-gray-600">
+            No materials added yet.
+          </p>
+          <p className="mt-1 text-xs text-gray-400">
+            Click{" "}
+            <strong>&ldquo;Add Material&rdquo;</strong> to specify the metals,
+            gems, or other components in this product.
+          </p>
           <button
             type="button"
             onClick={addMaterial}
-            className="mt-3 text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-gray-900"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4"
+            >
+              <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+            </svg>
             Add the first material
           </button>
         </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            {/* Table Header */}
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Material
-                </th>
+      )}
 
-                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Purity / Grade
-                </th>
+      {/* ── Material cards ────────────────────────────────────────── */}
+      {values.map((item, index) => {
+        const material = materials.find((m) => m.id === item.materialId);
+        const isPrecious = material?.type === "PRECIOUS_METAL";
+        const currentRate = getRowRate(item.materialId, item.purityId);
+        const lineCost = getRowLineCost(item, material);
 
-                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Quantity
-                </th>
+        const grossNum = parseFloat(item.grossWeight || "0") || 0;
+        const stoneNum = parseFloat(item.stoneWeight || "0") || 0;
+        const isStoneError = isPrecious && stoneNum > grossNum && grossNum > 0;
 
-                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Unit
-                </th>
+        return (
+          <div
+            key={index}
+            className="rounded-xl border border-gray-200 bg-white shadow-soft"
+          >
+            {/* Card header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-900">
+                  {material ? material.name : `Material ${index + 1}`}
+                </span>
+                {material && (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                    {material.type.replace("_", " ")}
+                  </span>
+                )}
+              </div>
 
-                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Wastage %
-                </th>
+              <button
+                type="button"
+                onClick={() => removeMaterial(index)}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-3.5 w-3.5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Remove
+              </button>
+            </div>
 
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Daily Rate
-                </th>
+            {/* Card body — fields */}
+            <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Material select */}
+              <div className="flex flex-col gap-1.5">
+                <label className={labelCls}>Material</label>
+                <select
+                  value={item.materialId}
+                  onChange={(e) => handleMaterialChange(index, e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Select material…</option>
+                  {materials.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Line Cost
-                </th>
+              {/* Purity / Grade */}
+              <div className="flex flex-col gap-1.5">
+                <label className={labelCls}>Purity / Grade</label>
+                <select
+                  value={item.purityId || ""}
+                  onChange={(e) =>
+                    updateMaterial(index, { purityId: e.target.value })
+                  }
+                  disabled={!material || material.purities.length === 0}
+                  className={`${inputCls} disabled:bg-gray-50 disabled:text-gray-400`}
+                >
+                  <option value="">
+                    {material?.purities.length ? "Select purity…" : "N/A"}
+                  </option>
+                  {material?.purities.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Action
-                </th>
-              </tr>
-            </thead>
+              {/* Unit (read-only) */}
+              <div className="flex flex-col gap-1.5">
+                <label className={labelCls}>Unit</label>
+                <div className={readOnlyCls}>
+                  {item.unit || <span className="text-gray-400">—</span>}
+                </div>
+              </div>
 
-            {/* Table Body */}
-            <tbody className="divide-y divide-gray-100">
-              {values.map((item, index) => {
-                const material = materials.find(
-                  (m) => m.id === item.materialId,
-                );
+              {/* ── Precious metal fields ────────────────────────── */}
+              {isPrecious && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelCls}>Gross Weight</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.0001"
+                      value={item.grossWeight ?? ""}
+                      onChange={(e) =>
+                        handleGrossWeightChange(index, e.target.value)
+                      }
+                      placeholder="0.0000"
+                      className={inputCls}
+                    />
+                  </div>
 
-                const currentRate =
-                  item.materialId && item.purityId
-                    ? (ratesMap[`${item.materialId}:${item.purityId}`] ?? null)
-                    : null;
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelCls}>Stone Weight</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.0001"
+                      value={item.stoneWeight ?? "0"}
+                      onChange={(e) =>
+                        handleStoneWeightChange(index, e.target.value)
+                      }
+                      placeholder="0.0000"
+                      className={`${inputCls} ${
+                        isStoneError
+                          ? "border-rose-400 text-rose-700 focus:ring-rose-100"
+                          : ""
+                      }`}
+                    />
+                    {isStoneError && (
+                      <p className="text-xs text-rose-600">
+                        Stone weight cannot exceed gross weight
+                      </p>
+                    )}
+                  </div>
 
-                const qty = Number(item.quantity || 0);
-                const wastage = Number(item.wastagePercent || 0);
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelCls}>Net Weight (auto)</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={item.netWeight ?? ""}
+                      placeholder="0.0000"
+                      className={readOnlyCls}
+                    />
+                  </div>
 
-                const adjustedQty = qty * (1 + wastage / 100);
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelCls}>Wastage %</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.wastagePercent ?? "0"}
+                      onChange={(e) =>
+                        updateMaterial(index, {
+                          wastagePercent: e.target.value,
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                </>
+              )}
 
-                const lineCost =
-                  currentRate !== null ? adjustedQty * currentRate : null;
+              {/* ── Non-precious quantity field ──────────────────── */}
+              {!isPrecious && material && (
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelCls}>Quantity</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.000001"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateMaterial(index, { quantity: e.target.value })
+                    }
+                    placeholder="0.000"
+                    className={inputCls}
+                  />
+                </div>
+              )}
+            </div>
 
-                return (
-                  <tr key={index} className="transition hover:bg-gray-50/60">
-                    {/* Material */}
-                    <td className="p-3">
-                      <select
-                        value={item.materialId}
-                        onChange={(e) => {
-                          const selected = materials.find(
-                            (m) => m.id === e.target.value,
-                          );
+            {/* Card footer — rate + cost */}
+            <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/60 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-sm text-gray-600">
+                Daily rate:{" "}
+                {currentRate !== null ? (
+                  <strong className="text-gray-900">
+                    NPR {currentRate.toLocaleString("en-NP")}
+                  </strong>
+                ) : (
+                  <span className="text-gray-400">
+                    {item.materialId ? "No active rate" : "—"}
+                  </span>
+                )}
+              </span>
 
-                          updateMaterial(index, {
-                            materialId: e.target.value,
-                            purityId: "",
-                            unit: selected?.unit ?? "GRAM",
-                          });
-                        }}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-                      >
-                        <option value="">Select material</option>
+              <span className="text-sm text-gray-600">
+                Line cost:{" "}
+                {lineCost !== null ? (
+                  <strong className="text-gray-900">
+                    NPR{" "}
+                    {lineCost.toLocaleString("en-NP", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </span>
+            </div>
+          </div>
+        );
+      })}
 
-                        {materials.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
+      {/* ── Total summary ─────────────────────────────────────────── */}
+      {values.length > 0 && (
+        <div className="flex flex-col items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-soft sm:flex-row sm:items-center">
+          <span className="text-sm text-gray-500">
+            {values.filter((v) => v.materialId).length} material(s) included
+          </span>
 
-                    {/* Purity */}
-                    <td className="p-3">
-                      <select
-                        value={item.purityId}
-                        onChange={(e) =>
-                          updateMaterial(index, {
-                            purityId: e.target.value,
-                          })
-                        }
-                        disabled={!material}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100 disabled:bg-gray-50 disabled:text-gray-400"
-                      >
-                        <option value="">Select purity</option>
-
-                        {material?.purities.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
-                    {/* Quantity */}
-                    <td className="p-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.000001"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateMaterial(index, {
-                            quantity: e.target.value,
-                          })
-                        }
-                        placeholder="0.000"
-                        className="w-28 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-                      />
-                    </td>
-
-                    {/* Unit */}
-                    <td className="p-3">
-                      <span className="text-xs font-medium text-gray-600">
-                        {item.unit}
-                      </span>
-                    </td>
-
-                    {/* Wastage */}
-                    <td className="p-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.wastagePercent}
-                        onChange={(e) =>
-                          updateMaterial(index, {
-                            wastagePercent: e.target.value,
-                          })
-                        }
-                        className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-                      />
-                    </td>
-
-                    {/* Daily Rate */}
-                    <td className="whitespace-nowrap p-3 text-right">
-                      {currentRate !== null ? (
-                        <span className="text-sm font-medium text-gray-900">
-                          NPR {currentRate.toLocaleString("en-NP")}
-                        </span>
-                      ) : (
-                        <span className="text-xs font-normal text-gray-500">
-                          {item.materialId && item.purityId
-                            ? "No active rate"
-                            : "—"}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Line Cost */}
-                    <td className="whitespace-nowrap p-3 text-right">
-                      {lineCost !== null ? (
-                        <span className="text-sm font-semibold text-gray-900">
-                          NPR{" "}
-                          {lineCost.toLocaleString("en-NP", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">—</span>
-                      )}
-                    </td>
-
-                    {/* Action */}
-                    <td className="p-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => removeMaterial(index)}
-                        className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-slate-100"
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                );
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-600">
+              Total Material Cost:
+            </span>
+            <span className="text-base font-bold text-gray-900">
+              NPR{" "}
+              {totalCost.toLocaleString("en-NP", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
               })}
-            </tbody>
-          </table>
+            </span>
+          </div>
         </div>
       )}
     </div>

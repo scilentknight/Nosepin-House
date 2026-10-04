@@ -17,6 +17,9 @@ interface CheckoutDraft {
   shippingLabel?: string | null;
   tax?: number;
   taxLabel?: string | null;
+  /** Only the cart items the customer checked — must be forwarded to the API so the backend
+   * orders only those lines and leaves everything else in the cart. */
+  selectedItems?: { productId: string | number; variantId: number | null; quantity: number }[];
 }
 
 const DRAFT_KEY = "bikesh-checkout-draft";
@@ -44,7 +47,7 @@ function submitEsewaForm(formUrl: string, fields: Record<string, string>) {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { clear } = useCart();
+  const { refresh } = useCart();
   const [draft, setDraft] = useState<CheckoutDraft | null>(null);
   const [method, setMethod] = useState<"COD" | "ESEWA">("COD");
   const [isPaying, setIsPaying] = useState(false);
@@ -86,6 +89,9 @@ export default function PaymentPage() {
       address: draft.address,
       saveAddress: draft.saveAddress,
       couponCode: draft.couponCode,
+      // Forward selected items so the backend only orders what the customer checked —
+      // the rest of the cart remains untouched.
+      selectedItems: draft.selectedItems,
     };
 
     if (method === "COD") {
@@ -103,7 +109,10 @@ export default function PaymentPage() {
       }
 
       sessionStorage.removeItem(DRAFT_KEY);
-      await clear();
+      // Use refresh() instead of clear() — clear() deletes the entire cart including
+      // unselected items. refresh() re-fetches from the server, which by this point
+      // only contains the items that weren't part of this order.
+      await refresh();
       router.push(`/order/success/${json.data.orderNumber}`);
       return;
     }

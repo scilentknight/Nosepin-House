@@ -89,7 +89,11 @@ export async function POST(request: Request) {
         data.materials.map((m) => ({
           materialId: m.materialId,
           purityId: m.purityId,
+          grossWeight: m.grossWeight,
+          stoneWeight: m.stoneWeight,
+          netWeight: m.netWeight,
           quantity: m.quantity,
+          unit: m.unit,
           wastagePercent: m.wastagePercent ?? 0,
         })),
         data.labourCharge ?? 0,
@@ -154,7 +158,10 @@ export async function POST(request: Request) {
           materials: {
             create: data.materials.map((m, i) => ({
               materialId: m.materialId,
-              purityId: m.purityId,
+              purityId: m.purityId && m.purityId.trim() !== "" ? m.purityId : null,
+              grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? m.grossWeight : null,
+              stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? m.stoneWeight : null,
+              netWeight: m.netWeight !== null && m.netWeight !== undefined ? m.netWeight : null,
               quantity: m.quantity,
               unit: m.unit,
               wastagePercent: m.wastagePercent ?? 0,

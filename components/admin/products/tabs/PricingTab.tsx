@@ -46,15 +46,19 @@ export function PricingTab({ values, set }: Props) {
           },
 
           body: JSON.stringify({
-            materials: values.materials.map((material) => ({
-              materialId: material.materialId,
-
-              purityId: material.purityId,
-
-              quantity: Number(material.quantity || 0),
-
-              wastagePercent: Number(material.wastagePercent || 0),
-            })),
+            materials: values.materials
+              .filter((m) => m.materialId && m.materialId.trim() !== "")
+              .map((material) => ({
+                id: material.id,
+                materialId: material.materialId,
+                purityId: material.purityId,
+                grossWeight: material.grossWeight ? Number(material.grossWeight) : null,
+                stoneWeight: material.stoneWeight ? Number(material.stoneWeight) : null,
+                netWeight: material.netWeight ? Number(material.netWeight) : null,
+                quantity: Number(material.quantity || material.netWeight || 0),
+                unit: material.unit,
+                wastagePercent: Number(material.wastagePercent || 0),
+              })),
 
             labourCharge: Number(values.labourCharge || 0),
 
