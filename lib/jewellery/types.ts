@@ -31,6 +31,7 @@ export interface ProductMaterialValue {
   materialId: string;
   purityId?: string;
   grossWeight?: string;
+  stoneMaterialId?: string;
   stoneWeight?: string;
   netWeight?: string;
   quantity: string;
@@ -48,7 +49,15 @@ export interface MaterialBreakdownItem {
   purityId?: string | null;
   purityName?: string | null;
   grossWeight?: number | null;
+  stoneMaterialId?: string | null;
+  stoneMaterialName?: string | null;
+  stoneMaterialType?: MaterialType | null;
   stoneWeight?: number | null;
+  convertedStoneWeight?: number | null;
+  stoneUnit?: MaterialUnit | null;
+  stoneRate?: number | null;
+  stoneCost?: number | null;
+  metalCost?: number | null;
   netWeight?: number | null;
   quantity: number;
   unit: MaterialUnit;

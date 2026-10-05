@@ -53,6 +53,7 @@ export function PricingTab({ values, set }: Props) {
                 materialId: material.materialId,
                 purityId: material.purityId,
                 grossWeight: material.grossWeight ? Number(material.grossWeight) : null,
+                stoneMaterialId: material.stoneMaterialId && material.stoneMaterialId.trim() !== "" ? material.stoneMaterialId.trim() : null,
                 stoneWeight: material.stoneWeight ? Number(material.stoneWeight) : null,
                 netWeight: material.netWeight ? Number(material.netWeight) : null,
                 quantity: Number(material.quantity || material.netWeight || 0),

@@ -40,6 +40,7 @@ export async function GET(
           include: {
             material: true,
             purity: true,
+            stoneMaterial: true,
           },
         },
 
@@ -291,6 +292,16 @@ export async function GET(
               name: item.purity.name,
               code: item.purity.code,
               fineness: decimalToNumber(item.purity.fineness),
+            }
+          : null,
+
+        stoneMaterial: (item as any).stoneMaterial
+          ? {
+              id: (item as any).stoneMaterial.id,
+              name: (item as any).stoneMaterial.name,
+              code: (item as any).stoneMaterial.code,
+              type: (item as any).stoneMaterial.type,
+              unit: (item as any).stoneMaterial.unit,
             }
           : null,
 

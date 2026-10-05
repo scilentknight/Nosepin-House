@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculateJewelleryPrice } from "./pricing";
 import { getDerivedMaterialRate } from "./rate-calculator";
+import { convertWeight } from "./unit-converter";
 import type { MaterialBreakdownItem } from "./types";
 
 export interface CalculateProductMaterialInput {
@@ -8,6 +9,7 @@ export interface CalculateProductMaterialInput {
   materialId: string;
   purityId?: string | null;
   grossWeight?: number | null;
+  stoneMaterialId?: string | null;
   stoneWeight?: number | null;
   netWeight?: number | null;
   quantity: number;
@@ -83,19 +85,71 @@ export async function calculateProductPrice(
         ? rateResult.rate
         : rateResult.rate.toNumber();
 
+    // 1. Resolve embedded stone material & rate (if stoneMaterialId is specified and stoneWeight > 0)
+    let stoneMat: any = null;
+    let stoneRateNum: number | null = null;
+    let stoneCost = 0;
+    let stoneUnit: any = null;
+    let convertedStoneWeight: number | null = null;
+
+    const rawStoneWeight = item.stoneWeight !== null && item.stoneWeight !== undefined ? Number(item.stoneWeight) : 0;
+
+    if (
+      item.stoneMaterialId &&
+      item.stoneMaterialId.trim() !== "" &&
+      rawStoneWeight > 0
+    ) {
+      const sMatId = item.stoneMaterialId.trim();
+      stoneMat = await prisma.material.findUnique({
+        where: { id: sMatId },
+        include: { purities: true },
+      });
+
+      if (!stoneMat) {
+        throw new Error(`Stone material with ID "${sMatId}" not found`);
+      }
+
+      const stoneRateResult = await getCurrentMaterialRate(
+        sMatId,
+        null,
+        targetDate,
+      );
+
+      if (!stoneRateResult) {
+        throw new Error(`No active material rate found for stone ${stoneMat.name}`);
+      }
+
+      stoneRateNum =
+        typeof stoneRateResult.rate === "number"
+          ? stoneRateResult.rate
+          : stoneRateResult.rate.toNumber();
+
+      stoneUnit = stoneMat.unit;
+      stoneCost = rawStoneWeight * stoneRateNum;
+
+      // Convert stone weight from stone unit to primary metal unit for mass deduction
+      convertedStoneWeight = convertWeight(
+        rawStoneWeight,
+        stoneMat.unit,
+        mat.unit,
+      ).toNumber();
+    } else if (rawStoneWeight > 0) {
+      // If stoneWeight is given without a distinct stoneMaterialId, treat as same unit
+      convertedStoneWeight = rawStoneWeight;
+    }
+
     // Determine effective quantity and weights based on material type
     let netWeight: number | null = null;
     let grossWeight: number | null = null;
-    let stoneWeight: number | null = null;
     let effectiveBaseQuantity = item.quantity;
     let wastagePercent = Number(item.wastagePercent || 0);
 
     if (mat.type === "PRECIOUS_METAL") {
       grossWeight = item.grossWeight !== null && item.grossWeight !== undefined ? Number(item.grossWeight) : null;
-      stoneWeight = item.stoneWeight !== null && item.stoneWeight !== undefined ? Number(item.stoneWeight) : 0;
 
       if (grossWeight !== null) {
-        netWeight = Math.max(0, grossWeight - (stoneWeight || 0));
+        const deduction = convertedStoneWeight || 0;
+        netWeight = Math.max(0, grossWeight - deduction);
         effectiveBaseQuantity = netWeight;
       } else if (item.netWeight !== null && item.netWeight !== undefined) {
         netWeight = Number(item.netWeight);
@@ -108,21 +162,31 @@ export async function calculateProductPrice(
       // Non-precious metals (Diamond, Gemstone, Piece, Other)
       effectiveBaseQuantity = Number(item.quantity || 0);
       grossWeight = null;
-      stoneWeight = null;
+      convertedStoneWeight = null;
       netWeight = null;
-      // Wastage is typically 0 for stones/pieces unless explicitly provided
       wastagePercent = Number(item.wastagePercent || 0);
     }
 
+    // 2. Primary metal/material cost
     const wastageWeight = (effectiveBaseQuantity * wastagePercent) / 100;
     const chargeableQuantity = effectiveBaseQuantity + wastageWeight;
-    const cost = chargeableQuantity * rateNum;
+    const metalCost = chargeableQuantity * rateNum;
 
     pricingMaterials.push({
       quantity: effectiveBaseQuantity,
       rate: rateNum,
       wastagePercent,
     });
+
+    if (stoneMat && stoneRateNum !== null && rawStoneWeight > 0) {
+      pricingMaterials.push({
+        quantity: rawStoneWeight,
+        rate: stoneRateNum,
+        wastagePercent: 0,
+      });
+    }
+
+    const totalLineCost = metalCost + stoneCost;
 
     materialBreakdown.push({
       id: item.id,
@@ -132,7 +196,15 @@ export async function calculateProductPrice(
       purityId: item.purityId || null,
       purityName: rateResult.targetPurity?.name || null,
       grossWeight,
-      stoneWeight,
+      stoneMaterialId: stoneMat ? stoneMat.id : item.stoneMaterialId || null,
+      stoneMaterialName: stoneMat ? stoneMat.name : null,
+      stoneMaterialType: stoneMat ? stoneMat.type : null,
+      stoneWeight: rawStoneWeight > 0 ? rawStoneWeight : null,
+      convertedStoneWeight: convertedStoneWeight && convertedStoneWeight > 0 ? convertedStoneWeight : null,
+      stoneUnit: stoneUnit || null,
+      stoneRate: stoneRateNum,
+      stoneCost: stoneCost > 0 ? stoneCost : null,
+      metalCost,
       netWeight,
       quantity: effectiveBaseQuantity,
       unit: mat.unit,
@@ -140,7 +212,7 @@ export async function calculateProductPrice(
       wastageWeight: wastageWeight > 0 ? wastageWeight : null,
       chargeableQuantity,
       rate: rateNum,
-      cost,
+      cost: totalLineCost,
     });
   }
 

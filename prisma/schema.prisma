@@ -353,18 +353,19 @@ model Product {
 }
 
 model Material {
-  id          String            @id @default(cuid())
-  name        String
-  code        String            @unique
-  type        MaterialType
-  unit        MaterialUnit
-  description String?
-  isActive    Boolean           @default(true)
-  purities    MaterialPurity[]
-  rates       MaterialRate[]
-  products    ProductMaterial[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id            String            @id @default(cuid())
+  name          String
+  code          String            @unique
+  type          MaterialType
+  unit          MaterialUnit
+  description   String?
+  isActive      Boolean           @default(true)
+  purities      MaterialPurity[]
+  rates         MaterialRate[]
+  products      ProductMaterial[] @relation("ProductMaterialPrimary")
+  stoneProducts ProductMaterial[] @relation("ProductMaterialStone")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([type])
   @@index([isActive])
@@ -409,26 +410,29 @@ model MaterialRate {
 }
 
 model ProductMaterial {
-  id             String          @id @default(cuid())
-  productId      Int
-  materialId     String
-  purityId       String?
-  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  material       Material        @relation(fields: [materialId], references: [id])
-  purity         MaterialPurity? @relation(fields: [purityId], references: [id])
-  grossWeight    Decimal?        @db.Decimal(18, 6)
-  stoneWeight    Decimal?        @db.Decimal(18, 6)
-  netWeight      Decimal?        @db.Decimal(18, 6)
-  quantity       Decimal         @db.Decimal(18, 6)
-  unit           MaterialUnit
-  wastagePercent Decimal?        @db.Decimal(8, 4)
-  sortOrder      Int             @default(0)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id              String          @id @default(cuid())
+  productId       Int
+  materialId      String
+  purityId        String?
+  stoneMaterialId String?
+  product         Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  material        Material        @relation("ProductMaterialPrimary", fields: [materialId], references: [id])
+  purity          MaterialPurity? @relation(fields: [purityId], references: [id])
+  stoneMaterial   Material?       @relation("ProductMaterialStone", fields: [stoneMaterialId], references: [id])
+  grossWeight     Decimal?        @db.Decimal(18, 6)
+  stoneWeight     Decimal?        @db.Decimal(18, 6)
+  netWeight       Decimal?        @db.Decimal(18, 6)
+  quantity        Decimal         @db.Decimal(18, 6)
+  unit            MaterialUnit
+  wastagePercent  Decimal?        @db.Decimal(8, 4)
+  sortOrder       Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@index([productId])
   @@index([materialId])
   @@index([purityId])
+  @@index([stoneMaterialId])
 }
 
 
