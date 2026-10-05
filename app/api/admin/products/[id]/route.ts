@@ -18,7 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       include: {
         images: { orderBy: { sortOrder: "asc" } },
         materials: {
-          include: { material: true, purity: true },
+          include: { material: true, purity: true, stoneMaterial: true },
           orderBy: { sortOrder: "asc" },
         },
         relationsFrom: { include: { related: { select: { id: true, name: true } } } },
@@ -46,6 +46,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         materialId: m.materialId,
         purityId: m.purityId ?? "",
         grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? String(m.grossWeight) : "",
+        stoneMaterialId: m.stoneMaterialId ?? "",
         stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? String(m.stoneWeight) : "",
         netWeight: m.netWeight !== null && m.netWeight !== undefined ? String(m.netWeight) : "",
         quantity: String(m.quantity),
@@ -94,6 +95,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           materialId: m.materialId,
           purityId: m.purityId,
           grossWeight: m.grossWeight,
+          stoneMaterialId: m.stoneMaterialId,
           stoneWeight: m.stoneWeight,
           netWeight: m.netWeight,
           quantity: m.quantity,
@@ -168,6 +170,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
               materialId: m.materialId,
               purityId: m.purityId && m.purityId.trim() !== "" ? m.purityId : null,
               grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? m.grossWeight : null,
+              stoneMaterialId: m.stoneMaterialId && m.stoneMaterialId.trim() !== "" ? m.stoneMaterialId : null,
               stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? m.stoneWeight : null,
               netWeight: m.netWeight !== null && m.netWeight !== undefined ? m.netWeight : null,
               quantity: m.quantity,
@@ -181,7 +184,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           },
         },
         include: {
-          materials: { include: { material: true, purity: true } },
+          materials: { include: { material: true, purity: true, stoneMaterial: true } },
           images: true,
         },
       });

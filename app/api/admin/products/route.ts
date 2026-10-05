@@ -43,7 +43,7 @@ export async function GET(request: Request) {
           category: { select: { id: true, name: true } },
           brand: { select: { id: true, name: true } },
           images: { take: 1, orderBy: { sortOrder: "asc" } },
-          materials: { include: { material: true, purity: true } },
+          materials: { include: { material: true, purity: true, stoneMaterial: true } },
           _count: { select: { variants: true } },
         },
         skip,
@@ -90,6 +90,7 @@ export async function POST(request: Request) {
           materialId: m.materialId,
           purityId: m.purityId,
           grossWeight: m.grossWeight,
+          stoneMaterialId: m.stoneMaterialId,
           stoneWeight: m.stoneWeight,
           netWeight: m.netWeight,
           quantity: m.quantity,
@@ -160,6 +161,7 @@ export async function POST(request: Request) {
               materialId: m.materialId,
               purityId: m.purityId && m.purityId.trim() !== "" ? m.purityId : null,
               grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? m.grossWeight : null,
+              stoneMaterialId: m.stoneMaterialId && m.stoneMaterialId.trim() !== "" ? m.stoneMaterialId : null,
               stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? m.stoneWeight : null,
               netWeight: m.netWeight !== null && m.netWeight !== undefined ? m.netWeight : null,
               quantity: m.quantity,
@@ -173,7 +175,7 @@ export async function POST(request: Request) {
           },
         },
         include: {
-          materials: { include: { material: true, purity: true } },
+          materials: { include: { material: true, purity: true, stoneMaterial: true } },
           images: true,
         },
       });

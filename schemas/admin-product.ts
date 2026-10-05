@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { convertWeightToNumber } from "@/lib/jewellery/unit-converter";
 
 const imageInputSchema = z.object({
   url: z.string(),
@@ -12,6 +13,7 @@ const productMaterialInputSchema = z
     materialId: z.string().min(1, "Material is required"),
     purityId: z.string().nullable().optional(),
     grossWeight: z.number().nonnegative().nullable().optional(),
+    stoneMaterialId: z.string().nullable().optional(),
     stoneWeight: z.number().nonnegative().nullable().optional(),
     netWeight: z.number().nonnegative().nullable().optional(),
     quantity: z.number().positive("Quantity or Net Weight must be greater than 0"),
@@ -27,12 +29,28 @@ const productMaterialInputSchema = z
         data.stoneWeight !== null &&
         data.stoneWeight !== undefined
       ) {
-        return data.stoneWeight <= data.grossWeight;
+        // If stoneMaterialId is present, convert from CARAT to primary unit (or stone unit to metal unit)
+        const converted = data.stoneMaterialId
+          ? convertWeightToNumber(data.stoneWeight, "CARAT", data.unit)
+          : data.stoneWeight;
+        return converted <= data.grossWeight;
       }
       return true;
     },
     {
-      message: "Stone weight cannot exceed gross weight",
+      message: "Stone weight cannot exceed gross metal weight",
+      path: ["stoneWeight"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.stoneMaterialId && data.stoneMaterialId.trim() !== "") {
+        return data.stoneWeight !== null && data.stoneWeight !== undefined && data.stoneWeight > 0;
+      }
+      return true;
+    },
+    {
+      message: "Stone weight must be greater than 0 when a stone type is selected",
       path: ["stoneWeight"],
     },
   );

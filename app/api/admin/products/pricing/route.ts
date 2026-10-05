@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       materialId: String(item.materialId).trim(),
       purityId: item.purityId && String(item.purityId).trim() !== "" ? String(item.purityId).trim() : null,
       grossWeight: item.grossWeight !== null && item.grossWeight !== undefined && item.grossWeight !== "" ? Number(item.grossWeight) : null,
+      stoneMaterialId: item.stoneMaterialId && String(item.stoneMaterialId).trim() !== "" ? String(item.stoneMaterialId).trim() : null,
       stoneWeight: item.stoneWeight !== null && item.stoneWeight !== undefined && item.stoneWeight !== "" ? Number(item.stoneWeight) : null,
       netWeight: item.netWeight !== null && item.netWeight !== undefined && item.netWeight !== "" ? Number(item.netWeight) : null,
       quantity: Number(item.quantity || 0),

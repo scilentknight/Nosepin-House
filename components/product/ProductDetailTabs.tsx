@@ -12,6 +12,11 @@ interface MaterialItem {
     name: string;
     code: string;
   } | null;
+  stoneMaterial?: {
+    name: string;
+    code: string;
+    unit?: string;
+  } | null;
   grossWeight?: number | null;
   stoneWeight?: number | null;
   netWeight?: number | null;
@@ -272,7 +277,15 @@ export function ProductDetailTabs({
                           </td>
 
                           <td className="px-4 py-4 text-gray-700">
-                            {item.quantity} {item.unit}
+                            <div>
+                              <span>{item.quantity} {item.unit}</span>
+                              {item.stoneMaterial && item.stoneWeight ? (
+                                <div className="mt-1 text-xs text-slate-500">
+                                  <span>Stone: <strong>{item.stoneMaterial.name}</strong> ({item.stoneWeight} {item.stoneMaterial.unit || "CARAT"})</span>
+                                  {item.grossWeight ? <span className="block text-gray-400">Gross: {item.grossWeight} {item.unit}</span> : null}
+                                </div>
+                              ) : null}
+                            </div>
                           </td>
 
                           <td className="px-4 py-4 text-gray-700">

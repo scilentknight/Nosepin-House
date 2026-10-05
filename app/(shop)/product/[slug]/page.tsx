@@ -640,6 +640,7 @@ export default async function ProductPage({
         include: {
           material: true,
           purity: true,
+          stoneMaterial: true,
         },
       },
 
@@ -1035,6 +1036,14 @@ export default async function ProductPage({
                 ? {
                     name: item.purity.name,
                     code: item.purity.code,
+                  }
+                : null,
+
+              stoneMaterial: (item as any).stoneMaterial
+                ? {
+                    name: (item as any).stoneMaterial.name,
+                    code: (item as any).stoneMaterial.code,
+                    unit: (item as any).stoneMaterial.unit,
                   }
                 : null,
 
