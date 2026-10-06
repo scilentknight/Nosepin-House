@@ -992,16 +992,6 @@ export default function ProductsPage() {
                           href={`/admin/products/${product.id}`}
                           className="flex items-center gap-3 font-medium text-gray-900 hover:text-slate-600"
                         >
-                          {/*
-                           * IMPORTANT:
-                           *
-                           * Use featuredImage as the
-                           * main product image.
-                           *
-                           * Do NOT use:
-                           * product.images[0]?.url
-                           */}
-
                           {product.featuredImage && (
                             <img
                               src={product.featuredImage}
