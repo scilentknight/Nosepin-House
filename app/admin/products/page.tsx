@@ -1006,7 +1006,7 @@ export default function ProductsPage() {
                             <img
                               src={product.featuredImage}
                               alt={product.name}
-                              className="h-9 w-9 rounded-lg object-cover"
+                              className="h-10 w-18 rounded object-cover"
                             />
                           )}
 
