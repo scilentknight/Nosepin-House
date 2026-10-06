@@ -42,7 +42,9 @@ export function MaterialComposition({ values, setValues }: Props) {
               map[`${summary.materialId}:${dr.purityId}`] = Number(dr.rate);
             }
             if (summary.baseRateRecord?.rate) {
-              map[`${summary.materialId}:base`] = Number(summary.baseRateRecord.rate);
+              map[`${summary.materialId}:base`] = Number(
+                summary.baseRateRecord.rate,
+              );
               map[summary.materialId] = Number(summary.baseRateRecord.rate);
             }
           }
@@ -84,7 +86,9 @@ export function MaterialComposition({ values, setValues }: Props) {
   }
 
   function updateMaterial(index: number, patch: Partial<ProductMaterialValue>) {
-    setValues(values.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+    setValues(
+      values.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+    );
   }
 
   function handleMaterialChange(index: number, materialId: string) {
@@ -124,24 +128,37 @@ export function MaterialComposition({ values, setValues }: Props) {
   function handleGrossWeightChange(index: number, grossStr: string) {
     const row = values[index];
     const gross = grossStr === "" ? 0 : parseFloat(grossStr) || 0;
-    const stone = row.stoneWeight === "" ? 0 : parseFloat(row.stoneWeight || "0") || 0;
-    const stoneMat = row.stoneMaterialId ? materials.find((m) => m.id === row.stoneMaterialId) : null;
+    const stone =
+      row.stoneWeight === "" ? 0 : parseFloat(row.stoneWeight || "0") || 0;
+    const stoneMat = row.stoneMaterialId
+      ? materials.find((m) => m.id === row.stoneMaterialId)
+      : null;
     const stoneUnit = stoneMat?.unit || "CARAT";
     const metalUnit = row.unit || "GRAM";
-    const convertedStone = stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
-    const net = grossStr === "" ? "" : Math.max(0, gross - convertedStone).toFixed(4);
+    const convertedStone =
+      stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
+    const net =
+      grossStr === "" ? "" : Math.max(0, gross - convertedStone).toFixed(4);
     updateMaterial(index, { grossWeight: grossStr, netWeight: net });
   }
 
   function handleStoneTypeChange(index: number, stoneMaterialId: string) {
     const row = values[index];
-    const gross = row.grossWeight === "" ? 0 : parseFloat(row.grossWeight || "0") || 0;
-    const stone = row.stoneWeight === "" ? 0 : parseFloat(row.stoneWeight || "0") || 0;
-    const stoneMat = stoneMaterialId ? materials.find((m) => m.id === stoneMaterialId) : null;
+    const gross =
+      row.grossWeight === "" ? 0 : parseFloat(row.grossWeight || "0") || 0;
+    const stone =
+      row.stoneWeight === "" ? 0 : parseFloat(row.stoneWeight || "0") || 0;
+    const stoneMat = stoneMaterialId
+      ? materials.find((m) => m.id === stoneMaterialId)
+      : null;
     const stoneUnit = stoneMat?.unit || "CARAT";
     const metalUnit = row.unit || "GRAM";
-    const convertedStone = stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
-    const net = row.grossWeight === "" ? "" : Math.max(0, gross - convertedStone).toFixed(4);
+    const convertedStone =
+      stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
+    const net =
+      row.grossWeight === ""
+        ? ""
+        : Math.max(0, gross - convertedStone).toFixed(4);
     updateMaterial(index, { stoneMaterialId, netWeight: net });
   }
 
@@ -150,12 +167,17 @@ export function MaterialComposition({ values, setValues }: Props) {
     const gross =
       row.grossWeight === "" ? 0 : parseFloat(row.grossWeight || "0") || 0;
     const stone = stoneStr === "" ? 0 : parseFloat(stoneStr) || 0;
-    const stoneMat = row.stoneMaterialId ? materials.find((m) => m.id === row.stoneMaterialId) : null;
+    const stoneMat = row.stoneMaterialId
+      ? materials.find((m) => m.id === row.stoneMaterialId)
+      : null;
     const stoneUnit = stoneMat?.unit || "CARAT";
     const metalUnit = row.unit || "GRAM";
-    const convertedStone = stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
+    const convertedStone =
+      stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
     const net =
-      row.grossWeight === "" ? "" : Math.max(0, gross - convertedStone).toFixed(4);
+      row.grossWeight === ""
+        ? ""
+        : Math.max(0, gross - convertedStone).toFixed(4);
     updateMaterial(index, { stoneWeight: stoneStr, netWeight: net });
   }
 
@@ -203,7 +225,8 @@ export function MaterialComposition({ values, setValues }: Props) {
       const stoneUnit = stoneMaterial?.unit || "CARAT";
       const metalUnit = material.unit || "GRAM";
 
-      convertedStone = stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
+      convertedStone =
+        stone > 0 ? convertWeightToNumber(stone, stoneUnit, metalUnit) : 0;
       const net = Math.max(0, gross - convertedStone);
       const wastage = parseFloat(item.wastagePercent || "0") || 0;
 
@@ -254,7 +277,9 @@ export function MaterialComposition({ values, setValues }: Props) {
   if (loading) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-soft">
-        <p className="text-sm text-gray-500">Loading materials and daily rates…</p>
+        <p className="text-sm text-gray-500">
+          Loading materials and daily rates…
+        </p>
       </div>
     );
   }
@@ -296,8 +321,8 @@ export function MaterialComposition({ values, setValues }: Props) {
             No materials added yet.
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Click <strong>&ldquo;Add Material&rdquo;</strong> to specify the metals,
-            gems, or other components in this product.
+            Click <strong>&ldquo;Add Material&rdquo;</strong> to specify the
+            metals, gems, or other components in this product.
           </p>
           <button
             type="button"
@@ -325,8 +350,9 @@ export function MaterialComposition({ values, setValues }: Props) {
 
         const grossNum = parseFloat(item.grossWeight || "0") || 0;
         const stoneNum = parseFloat(item.stoneWeight || "0") || 0;
-        const isStoneError = isPrecious && stoneNum > grossNum && grossNum > 0;
-
+        // const isStoneError = isPrecious && stoneNum > grossNum && grossNum > 0;
+        const isStoneError =
+          isPrecious && grossNum > 0 && calcs.convertedStone > grossNum;
         // Filter stone options from database materials (excluding current material)
         const stoneOptions = materials.filter((m) => m.id !== item.materialId);
 
@@ -348,7 +374,8 @@ export function MaterialComposition({ values, setValues }: Props) {
                 )}
                 {calcs.stoneMaterial && (
                   <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 border border-amber-200/60">
-                    + {calcs.stoneMaterial.name} ({item.stoneWeight || "0"} {calcs.stoneMaterial.unit})
+                    + {calcs.stoneMaterial.name} ({item.stoneWeight || "0"}{" "}
+                    {calcs.stoneMaterial.unit})
                   </span>
                 )}
               </div>
@@ -428,7 +455,9 @@ export function MaterialComposition({ values, setValues }: Props) {
                 <>
                   {/* Gross Weight */}
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Gross Weight ({item.unit})</label>
+                    <label className={labelCls}>
+                      Gross Weight ({item.unit})
+                    </label>
                     <input
                       type="number"
                       min="0"
@@ -472,7 +501,10 @@ export function MaterialComposition({ values, setValues }: Props) {
                   {/* Stone Weight */}
                   <div className="flex flex-col gap-1.5">
                     <label className={labelCls}>
-                      Stone Weight {calcs.stoneMaterial ? `(${calcs.stoneMaterial.unit})` : ""}
+                      Stone Weight{" "}
+                      {calcs.stoneMaterial
+                        ? `(${calcs.stoneMaterial.unit})`
+                        : ""}
                     </label>
                     <input
                       type="number"
@@ -491,17 +523,26 @@ export function MaterialComposition({ values, setValues }: Props) {
                     />
                     {isStoneError && (
                       <p className="text-xs text-rose-600">
-                        Converted stone weight ({calcs.convertedStone.toFixed(4)} {item.unit}) cannot exceed gross weight ({grossNum} {item.unit})
+                        Converted stone weight (
+                        {calcs.convertedStone.toFixed(4)} {item.unit}) cannot
+                        exceed gross weight ({grossNum} {item.unit})
                       </p>
                     )}
                     {!isStoneError && calcs.stoneMaterial && stoneNum > 0 && (
                       <p className="text-xs text-slate-500">
                         {calcs.stoneMaterial.unit !== item.unit ? (
                           <span>
-                            {stoneNum} {calcs.stoneMaterial.unit} = <strong>{calcs.convertedStone.toFixed(4)} {item.unit}</strong> deducted from metal
+                            {stoneNum} {calcs.stoneMaterial.unit} ={" "}
+                            <strong>
+                              {calcs.convertedStone.toFixed(4)} {item.unit}
+                            </strong>{" "}
+                            deducted from metal
                           </span>
                         ) : (
-                          <span>Priced at {calcs.stoneMaterial.name} rate ({calcs.stoneMaterial.unit})</span>
+                          <span>
+                            Priced at {calcs.stoneMaterial.name} rate (
+                            {calcs.stoneMaterial.unit})
+                          </span>
                         )}
                       </p>
                     )}
@@ -509,7 +550,9 @@ export function MaterialComposition({ values, setValues }: Props) {
 
                   {/* Net Metal Weight (auto) */}
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Net Metal Weight (auto {item.unit})</label>
+                    <label className={labelCls}>
+                      Net Metal Weight (auto {item.unit})
+                    </label>
                     <input
                       type="text"
                       readOnly
@@ -582,7 +625,8 @@ export function MaterialComposition({ values, setValues }: Props) {
                   {material?.name || "Material"} rate:{" "}
                   {calcs.primaryRate !== null ? (
                     <strong className="text-gray-900">
-                      NPR {calcs.primaryRate.toLocaleString("en-NP")} / {item.unit}
+                      NPR {calcs.primaryRate.toLocaleString("en-NP")} /{" "}
+                      {item.unit}
                     </strong>
                   ) : (
                     <span className="text-gray-400">
@@ -596,7 +640,8 @@ export function MaterialComposition({ values, setValues }: Props) {
                     {calcs.stoneMaterial.name} rate:{" "}
                     {calcs.stoneRate !== null ? (
                       <strong className="text-gray-900">
-                        NPR {calcs.stoneRate.toLocaleString("en-NP")} / {calcs.stoneMaterial.unit}
+                        NPR {calcs.stoneRate.toLocaleString("en-NP")} /{" "}
+                        {calcs.stoneMaterial.unit}
                       </strong>
                     ) : (
                       <span className="text-gray-400">No active rate</span>
@@ -606,25 +651,27 @@ export function MaterialComposition({ values, setValues }: Props) {
               </div>
 
               <div className="flex flex-col items-start sm:items-end gap-0.5">
-                {calcs.stoneMaterial && calcs.stoneCost !== null && calcs.stoneCost > 0 && (
-                  <div className="text-xs text-slate-500">
-                    <span>
-                      Metal: NPR{" "}
-                      {(calcs.metalCost ?? 0).toLocaleString("en-NP", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                    <span className="mx-1.5">+</span>
-                    <span>
-                      Stone: NPR{" "}
-                      {calcs.stoneCost.toLocaleString("en-NP", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
-                )}
+                {calcs.stoneMaterial &&
+                  calcs.stoneCost !== null &&
+                  calcs.stoneCost > 0 && (
+                    <div className="text-xs text-slate-500">
+                      <span>
+                        Metal: NPR{" "}
+                        {(calcs.metalCost ?? 0).toLocaleString("en-NP", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span className="mx-1.5">+</span>
+                      <span>
+                        Stone: NPR{" "}
+                        {calcs.stoneCost.toLocaleString("en-NP", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
 
                 <span className="text-sm text-gray-600">
                   Line Total:{" "}
