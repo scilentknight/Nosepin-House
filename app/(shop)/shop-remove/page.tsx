@@ -311,7 +311,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
                     colorway: p.colorway,
                     stock: p.stock,
-                    image: p.images[0]?.url ?? null,
+                    image: p.featuredImage ?? p.images[0]?.url ?? null,
                     category: p.category,
                     rating: Math.round(p.avgRating * 10) / 10,
                     reviewCount: p.reviews.length,

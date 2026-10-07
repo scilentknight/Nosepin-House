@@ -26,6 +26,7 @@ function mapPromoProduct(p: {
   compareAtPrice: unknown;
   colorway: string;
   featuredImage: string | null;
+  images: { url: string | null }[];
   brand: { name: string } | null;
 }) {
   return {
@@ -36,8 +37,8 @@ function mapPromoProduct(p: {
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
     colorway: p.colorway,
 
-    // Always use the product's featured image
-    featuredImage: p.featuredImage ?? null,
+    // Fall back to the first gallery image when no featured image is set.
+    featuredImage: p.featuredImage ?? p.images[0]?.url ?? null,
 
     brandName: p.brand?.name ?? null,
   };
@@ -75,7 +76,7 @@ function mapProductCard(
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
     colorway: p.colorway,
     stock: p.stock,
-    image: p.featuredImage ?? null,
+    image: p.featuredImage ?? p.images[0]?.url ?? null,
     category: p.category ?? undefined,
     rating: Math.round(avgRating * 10) / 10,
     reviewCount: p.reviews.length,
