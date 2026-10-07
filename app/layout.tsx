@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://YOUR-DOMAIN.com"),
+  metadataBase: new URL("https://nosepinhouse.com"),
 
   title: {
     default: "NOSEPIN | Jewellery in Nepal",

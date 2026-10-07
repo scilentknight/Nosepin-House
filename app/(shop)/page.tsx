@@ -15,7 +15,6 @@ import { resolveViewerProductPricing } from "@/lib/checkoutCore";
 import { computeDiscountedUnitPrice, computeAutoPv } from "@/lib/pricing";
 import { GoogleReviews } from "@/components/home/GoogleReviews";
 
-
 const HERO_BANNER_IMAGE = "/images/hero-banner-img.jpeg";
 
 function mapPromoProduct(p: {
@@ -112,7 +111,20 @@ async function getHomeData() {
     trendingProducts,
   ] = await Promise.all([
     prisma.category.findMany({
-      where: { status: "ACTIVE", deletedAt: null },
+      where: {
+        status: "ACTIVE",
+        deletedAt: null,
+        // Only top-level categories
+        parentCategoryId: null,
+
+        // Must have at least one published product
+        products: {
+          some: {
+            status: "PUBLISHED",
+            deletedAt: null,
+          },
+        },
+      },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
     prisma.brand.findMany({
