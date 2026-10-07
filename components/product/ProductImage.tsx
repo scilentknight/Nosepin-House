@@ -26,7 +26,14 @@ export function ProductImage({
 
   return (
     <div className={`relative aspect-square overflow-hidden ${rounded ? "rounded-2xl" : ""} bg-gray-100 ${className}`}>
-      <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        unoptimized={src.includes("/uploads/")}
+        className="object-cover"
+      />
     </div>
   );
 }
