@@ -25,13 +25,13 @@ export default function FloatingIcons() {
           <MessageCircle size={28} />
         </a>
 
-        <button
+        {/* <button
           onClick={scrollToTop}
           className="bg-[#9d363d] text-white p-3 shadow-md hover:bg-[#852a30] transition-colors flex items-center justify-center w-10 h-10 rounded"
           aria-label="Scroll to top"
         >
           <ArrowUp size={20} />
-        </button>
+        </button> */}
       </div>
     </>
   );
