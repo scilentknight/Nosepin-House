@@ -156,6 +156,7 @@ export function ImageUpload({
             alt=""
             fill
             sizes={size === "sm" ? "36px" : "144px"}
+            unoptimized={value.includes("/uploads/")}
             className={
               fit === "contain" ? "object-contain p-1.5" : "object-cover"
             }
