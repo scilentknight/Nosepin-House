@@ -86,7 +86,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NP",
-    url: "https://YOUR-DOMAIN.com",
+    url: "https://nosepinhouse.com",
     siteName: "NOSEPIN",
     title: "NOSEPIN | Jewellery in Nepal",
     description:
@@ -110,7 +110,7 @@ export const metadata: Metadata = {
   },
 
   alternates: {
-    canonical: "https://YOUR-DOMAIN.com",
+    canonical: "https://nosepinhouse.com",
   },
 };
 
