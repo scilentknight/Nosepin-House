@@ -366,6 +366,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         // },
         include: {
           category: true,
+          images: {
+            take: 1,
+          },
           reviews: {
             select: {
               rating: true,
