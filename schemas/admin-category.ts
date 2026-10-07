@@ -32,7 +32,7 @@ export const categoryReorderSchema = z.object({
         id: z.coerce.number().int(),
         sortOrder: z.number().int(),
         parentCategoryId: z.coerce.number().int().nullable().optional(),
-      })
+      }),
     )
     .min(1),
 });
