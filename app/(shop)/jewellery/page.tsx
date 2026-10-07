@@ -366,6 +366,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         // },
         include: {
           category: true,
+          images: {
+            take: 1,
+          },
           reviews: {
             select: {
               rating: true,
@@ -858,7 +861,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                         : null,
                       colorway: p.colorway,
                       stock: p.stock,
-                      image: p.featuredImage ?? null,
+                      image: p.featuredImage ?? p.images[0]?.url ?? null,
                       category: p.category,
                       rating: Math.round(p.avgRating * 10) / 10,
                       reviewCount: p.reviews.length,
