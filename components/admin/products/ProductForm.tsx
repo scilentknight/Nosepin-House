@@ -233,6 +233,9 @@ function toPayload(values: ProductFormValues) {
   return {
     ...values,
 
+    // The gallery's first image is the listing image unless explicitly overridden.
+    featuredImage: values.featuredImage || values.images[0]?.url || null,
+
     brandId: values.brandId || null,
 
     costPrice: num(values.costPrice),
