@@ -61,16 +61,27 @@ interface RateHistoryRecord {
 }
 
 export function MaterialRateManager() {
-  const [materialSummaries, setMaterialSummaries] = useState<MaterialSummary[]>([]);
-  const [inputStates, setInputStates] = useState<Record<string, MaterialInputState>>({});
+  const [materialSummaries, setMaterialSummaries] = useState<MaterialSummary[]>(
+    [],
+  );
+  const [inputStates, setInputStates] = useState<
+    Record<string, MaterialInputState>
+  >({});
   const [historyRecords, setHistoryRecords] = useState<RateHistoryRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"today" | "history">("today");
 
   const [loading, setLoading] = useState(true);
   const [savingMaterialId, setSavingMaterialId] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const todayStr = new Date().toISOString().split("T")[0];
+
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 30);
+  const maxDateStr = maxDate.toISOString().split("T")[0];
 
   useEffect(() => {
     loadData();
@@ -97,13 +108,17 @@ export function MaterialRateManager() {
       const initialInputs: Record<string, MaterialInputState> = {};
       for (const mat of summaries) {
         const basePurity =
-          mat.purities.find((p) => p.code.toUpperCase() === "24K" || p.name.includes("24K")) ||
+          mat.purities.find(
+            (p) => p.code.toUpperCase() === "24K" || p.name.includes("24K"),
+          ) ||
           mat.purities.find((p) => p.code.includes("999")) ||
           mat.purities[0];
 
         initialInputs[mat.materialId] = {
           basePurityId: mat.baseRateRecord?.purityId || basePurity?.id || "",
-          baseRate: mat.baseRateRecord?.rate ? String(mat.baseRateRecord.rate) : "",
+          baseRate: mat.baseRateRecord?.rate
+            ? String(mat.baseRateRecord.rate)
+            : "",
           rateDate: todayStr,
           notes: mat.baseRateRecord?.notes || "",
         };
@@ -141,19 +156,31 @@ export function MaterialRateManager() {
     }
 
     const baseRate = parseFloat(input.baseRate);
-    const basePurity = material.purities.find((p) => p.id === input.basePurityId);
+    const basePurity = material.purities.find(
+      (p) => p.id === input.basePurityId,
+    );
     if (!basePurity) return baseRate;
 
     if (basePurity.id === targetPurity.id) return baseRate;
 
-    const baseKarat = extractKarat(basePurity.code) || extractKarat(basePurity.name);
-    const targetKarat = extractKarat(targetPurity.code) || extractKarat(targetPurity.name);
+    const baseKarat =
+      extractKarat(basePurity.code) || extractKarat(basePurity.name);
+    const targetKarat =
+      extractKarat(targetPurity.code) || extractKarat(targetPurity.name);
     if (baseKarat && targetKarat && baseKarat > 0) {
       return Math.round((baseRate / baseKarat) * targetKarat * 10000) / 10000;
     }
 
-    if (basePurity.fineness && targetPurity.fineness && basePurity.fineness > 0) {
-      return Math.round((baseRate * (targetPurity.fineness / basePurity.fineness)) * 10000) / 10000;
+    if (
+      basePurity.fineness &&
+      targetPurity.fineness &&
+      basePurity.fineness > 0
+    ) {
+      return (
+        Math.round(
+          baseRate * (targetPurity.fineness / basePurity.fineness) * 10000,
+        ) / 10000
+      );
     }
 
     return baseRate;
@@ -170,7 +197,10 @@ export function MaterialRateManager() {
 
     const rateNum = parseFloat(input.baseRate);
     if (isNaN(rateNum) || rateNum <= 0) {
-      setMessage({ type: "error", text: "Please enter a valid positive base rate" });
+      setMessage({
+        type: "error",
+        text: "Please enter a valid positive base rate",
+      });
       return;
     }
 
@@ -286,7 +316,9 @@ export function MaterialRateManager() {
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-bold text-gray-900">{mat.materialName}</h2>
+                        <h2 className="text-lg font-bold text-gray-900">
+                          {mat.materialName}
+                        </h2>
                         <span className="rounded-md bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 uppercase">
                           {mat.type.replace("_", " ")}
                         </span>
@@ -295,7 +327,8 @@ export function MaterialRateManager() {
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Code: {mat.materialCode} | Purities: {mat.purities.length} configured
+                        Code: {mat.materialCode} | Purities:{" "}
+                        {mat.purities.length} configured
                       </p>
                     </div>
 
@@ -304,10 +337,14 @@ export function MaterialRateManager() {
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
                           <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
                           Active Base: {mat.baseRateRecord.purity.name} = NPR{" "}
-                          {mat.baseRateRecord.rate.toLocaleString()} / {mat.unit.toLowerCase()}
+                          {mat.baseRateRecord.rate.toLocaleString()} /{" "}
+                          {mat.unit.toLowerCase()}
                         </span>
                         <p className="text-[11px] text-gray-400 mt-1">
-                          Date: {new Date(mat.baseRateRecord.rateDate).toLocaleDateString()}
+                          Date:{" "}
+                          {new Date(
+                            mat.baseRateRecord.rateDate,
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     )}
@@ -322,7 +359,11 @@ export function MaterialRateManager() {
                       <select
                         value={input.basePurityId}
                         onChange={(e) =>
-                          handleInputChange(mat.materialId, "basePurityId", e.target.value)
+                          handleInputChange(
+                            mat.materialId,
+                            "basePurityId",
+                            e.target.value,
+                          )
                         }
                         className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                       >
@@ -344,7 +385,11 @@ export function MaterialRateManager() {
                         step="0.01"
                         value={input.baseRate}
                         onChange={(e) =>
-                          handleInputChange(mat.materialId, "baseRate", e.target.value)
+                          handleInputChange(
+                            mat.materialId,
+                            "baseRate",
+                            e.target.value,
+                          )
                         }
                         placeholder="e.g. 24000"
                         className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
@@ -358,9 +403,15 @@ export function MaterialRateManager() {
                       <div className="relative">
                         <input
                           type="date"
+                          min={todayStr}
+                          max={maxDateStr}
                           value={input.rateDate}
                           onChange={(e) =>
-                            handleInputChange(mat.materialId, "rateDate", e.target.value)
+                            handleInputChange(
+                              mat.materialId,
+                              "rateDate",
+                              e.target.value,
+                            )
                           }
                           className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                         />
@@ -375,7 +426,11 @@ export function MaterialRateManager() {
                         type="text"
                         value={input.notes}
                         onChange={(e) =>
-                          handleInputChange(mat.materialId, "notes", e.target.value)
+                          handleInputChange(
+                            mat.materialId,
+                            "notes",
+                            e.target.value,
+                          )
                         }
                         placeholder="Market rate note"
                         className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
@@ -410,22 +465,33 @@ export function MaterialRateManager() {
                             <th className="px-4 py-3">Code</th>
                             <th className="px-4 py-3">Fineness</th>
                             <th className="px-4 py-3">Rate Type</th>
-                            <th className="px-4 py-3 text-right">Calculated Rate (NPR / {mat.unit.toLowerCase()})</th>
+                            <th className="px-4 py-3 text-right">
+                              Calculated Rate (NPR / {mat.unit.toLowerCase()})
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {mat.purities.map((purity) => {
                             const isBase = input.basePurityId === purity.id;
-                            const previewRate = calculatePreviewDerivedRate(mat, purity);
+                            const previewRate = calculatePreviewDerivedRate(
+                              mat,
+                              purity,
+                            );
 
                             return (
                               <tr
                                 key={purity.id}
-                                className={isBase ? "bg-amber-50/40 font-medium" : "hover:bg-gray-50/50"}
+                                className={
+                                  isBase
+                                    ? "bg-amber-50/40 font-medium"
+                                    : "hover:bg-gray-50/50"
+                                }
                               >
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-medium text-gray-900">{purity.name}</span>
+                                    <span className="font-medium text-gray-900">
+                                      {purity.name}
+                                    </span>
                                     {isBase && (
                                       <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200">
                                         BASE PURITY
@@ -437,20 +503,30 @@ export function MaterialRateManager() {
                                   {purity.code}
                                 </td>
                                 <td className="px-4 py-3 text-xs text-gray-500">
-                                  {purity.fineness !== null ? purity.fineness : "—"}
+                                  {purity.fineness !== null
+                                    ? purity.fineness
+                                    : "—"}
                                 </td>
                                 <td className="px-4 py-3 text-xs">
                                   {isBase ? (
-                                    <span className="text-amber-700 font-medium">User Base Rate</span>
+                                    <span className="text-amber-700 font-medium">
+                                      User Base Rate
+                                    </span>
                                   ) : (
-                                    <span className="text-emerald-700 font-medium">Derived Automatically</span>
+                                    <span className="text-emerald-700 font-medium">
+                                      Derived Automatically
+                                    </span>
                                   )}
                                 </td>
                                 <td className="px-4 py-3 text-right font-semibold text-gray-900">
                                   {previewRate !== null ? (
-                                    <span>NPR {previewRate.toLocaleString("en-NP")}</span>
+                                    <span>
+                                      NPR {previewRate.toLocaleString("en-NP")}
+                                    </span>
                                   ) : (
-                                    <span className="text-gray-400 font-normal italic">Enter base rate</span>
+                                    <span className="text-gray-400 font-normal italic">
+                                      Enter base rate
+                                    </span>
                                   )}
                                 </td>
                               </tr>
@@ -486,7 +562,10 @@ export function MaterialRateManager() {
               <tbody className="divide-y divide-gray-100">
                 {historyRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td
+                      colSpan={7}
+                      className="px-4 py-8 text-center text-gray-500"
+                    >
                       No rate history recorded yet.
                     </td>
                   </tr>
@@ -496,10 +575,14 @@ export function MaterialRateManager() {
                       <td className="px-4 py-3.5 font-medium text-gray-900 whitespace-nowrap">
                         {new Date(r.rateDate).toLocaleDateString("en-NP")}
                       </td>
-                      <td className="px-4 py-3.5 font-medium text-gray-900">{r.material.name}</td>
+                      <td className="px-4 py-3.5 font-medium text-gray-900">
+                        {r.material.name}
+                      </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-900 font-medium">{r.purity.name}</span>
+                          <span className="text-gray-900 font-medium">
+                            {r.purity.name}
+                          </span>
                           {r.isBaseRate && (
                             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
                               BASE
@@ -510,11 +593,15 @@ export function MaterialRateManager() {
                       <td className="px-4 py-3.5 text-right font-semibold text-gray-900">
                         NPR {r.rate.toLocaleString("en-NP")}
                       </td>
-                      <td className="px-4 py-3.5 text-gray-500">Per {r.unit.toLowerCase()}</td>
+                      <td className="px-4 py-3.5 text-gray-500">
+                        Per {r.unit.toLowerCase()}
+                      </td>
                       <td className="px-4 py-3.5 text-xs text-gray-500">
                         {r.isBaseRate ? "Daily Base Rate" : "Purity Specific"}
                       </td>
-                      <td className="px-4 py-3.5 text-gray-500">{r.notes || "—"}</td>
+                      <td className="px-4 py-3.5 text-gray-500">
+                        {r.notes || "—"}
+                      </td>
                     </tr>
                   ))
                 )}
