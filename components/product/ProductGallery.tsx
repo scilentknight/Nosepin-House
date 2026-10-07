@@ -57,6 +57,7 @@ export function ProductGallery({
             alt={active.alt || productName}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
+            unoptimized={active.url.includes("/uploads/")}
             className="object-cover"
             priority
           />
@@ -103,7 +104,14 @@ export function ProductGallery({
                 aria-label={`View photo ${i + 1}`}
                 aria-current={i === activeIndex}
               >
-                <Image src={img.url} alt={img.alt || `${productName} photo ${i + 1}`} fill sizes="64px" className="object-cover" />
+                <Image
+                  src={img.url}
+                  alt={img.alt || `${productName} photo ${i + 1}`}
+                  fill
+                  sizes="64px"
+                  unoptimized={img.url.includes("/uploads/")}
+                  className="object-cover"
+                />
               </button>
             ))}
           </div>
