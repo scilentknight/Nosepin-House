@@ -133,7 +133,7 @@ export async function POST(request: Request) {
           length: data.length ?? null,
           width: data.width ?? null,
           height: data.height ?? null,
-          featuredImage: data.featuredImage || null,
+          featuredImage: data.featuredImage || data.images[0]?.url || null,
           isFeatured: data.isFeatured,
           isBestSeller: data.isBestSeller,
           isNewArrival: data.isNewArrival,
