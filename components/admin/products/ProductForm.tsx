@@ -278,14 +278,32 @@ function toPayload(values: ProductFormValues) {
       .map((material, index) => ({
         id: material.id,
         materialId: material.materialId.trim(),
-        purityId: material.purityId && material.purityId.trim() !== "" ? material.purityId.trim() : null,
-        grossWeight: material.grossWeight && material.grossWeight.trim() !== "" ? Number(material.grossWeight) : null,
-        stoneMaterialId: material.stoneMaterialId && material.stoneMaterialId.trim() !== "" ? material.stoneMaterialId.trim() : null,
-        stoneWeight: material.stoneWeight && material.stoneWeight.trim() !== "" ? Number(material.stoneWeight) : null,
-        netWeight: material.netWeight && material.netWeight.trim() !== "" ? Number(material.netWeight) : null,
+        purityId:
+          material.purityId && material.purityId.trim() !== ""
+            ? material.purityId.trim()
+            : null,
+        grossWeight:
+          material.grossWeight && material.grossWeight.trim() !== ""
+            ? Number(material.grossWeight)
+            : null,
+        stoneMaterialId:
+          material.stoneMaterialId && material.stoneMaterialId.trim() !== ""
+            ? material.stoneMaterialId.trim()
+            : null,
+        stoneWeight:
+          material.stoneWeight && material.stoneWeight.trim() !== ""
+            ? Number(material.stoneWeight)
+            : null,
+        netWeight:
+          material.netWeight && material.netWeight.trim() !== ""
+            ? Number(material.netWeight)
+            : null,
         quantity: Number(material.quantity || material.netWeight || 0),
         unit: material.unit,
-        wastagePercent: material.wastagePercent && material.wastagePercent.trim() !== "" ? Number(material.wastagePercent) : 0,
+        wastagePercent:
+          material.wastagePercent && material.wastagePercent.trim() !== ""
+            ? Number(material.wastagePercent)
+            : 0,
         sortOrder: index,
       })),
 

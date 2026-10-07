@@ -39,11 +39,6 @@ export function GeneralTab({
 }: TabProps) {
   const [brands, setBrands] = useState<Option[]>([]);
 
-  /*
-   * Load brands only.
-   *
-   * Categories are now loaded by ProductForm.
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -93,7 +88,7 @@ export function GeneralTab({
           label="Product name"
           value={values.name}
           onChange={(e) => set("name", e.target.value)}
-          required
+          // required
         />
 
         {/* Slug */}
@@ -148,7 +143,7 @@ export function GeneralTab({
             value={values.categoryId}
             onChange={(categoryId) => set("categoryId", categoryId)}
             loading={loadingCategories}
-            required
+            // required
           />
         </div>
 
