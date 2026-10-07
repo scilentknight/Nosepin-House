@@ -6,17 +6,27 @@ import { ok, fail, handleApiError } from "@/lib/api";
 
 export const runtime = "nodejs";
 
-const ALLOWED_FOLDERS = ["categories", "brands", "products", "variants", "banners", "invoices", "payment", "avatars"] as const;
+const ALLOWED_FOLDERS = [
+  "categories",
+  "brands",
+  "products",
+  "variants",
+  "banners",
+  "invoices",
+  "payment",
+  "avatars",
+] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 
 const ALLOWED_MIME_TO_EXT: Record<string, string> = {
-  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/jpeg": "jpeg",
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
 };
 
-const MAX_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
@@ -27,13 +37,21 @@ export async function POST(request: Request) {
     const folder = formData.get("folder");
 
     if (!(file instanceof File)) return fail(400, "No file provided");
-    if (typeof folder !== "string" || !ALLOWED_FOLDERS.includes(folder as UploadFolder)) {
+    if (
+      typeof folder !== "string" ||
+      !ALLOWED_FOLDERS.includes(folder as UploadFolder)
+    ) {
       return fail(400, "Invalid upload folder");
     }
 
     const ext = ALLOWED_MIME_TO_EXT[file.type];
-    if (!ext) return fail(400, "Unsupported file type. Use JPEG, PNG, WEBP, or GIF.");
-    if (file.size > MAX_SIZE_BYTES) return fail(400, "File exceeds the 5MB limit");
+    if (!ext)
+      return fail(
+        400,
+        "Unsupported file type. Use JPG, JPEG, PNG, WEBP, or GIF.",
+      );
+    if (file.size > MAX_SIZE_BYTES)
+      return fail(400, "File exceeds the 10MB limit");
 
     const filename = `${randomUUID()}.${ext}`;
     const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
