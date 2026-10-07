@@ -14,8 +14,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <Footer />
         </div>
-/         <FloatingIcon />
-
+         <FloatingIcon />
       </WishlistProvider>
     </CartProvider>
   );
