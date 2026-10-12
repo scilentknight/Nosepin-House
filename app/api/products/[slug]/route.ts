@@ -147,6 +147,9 @@ export async function GET(
       price: Number(product.price),
 
       compareAtPrice: decimalToNumber(product.compareAtPrice),
+      grossPrice: decimalToNumber(product.compareAtPrice),
+      pricingStrategy: product.pricingStrategy ?? "RATE_BASED",
+      discountPercent: decimalToNumber(product.discountPercent),
 
       discountType: product.discountType,
 
@@ -307,6 +310,10 @@ export async function GET(
 
         grossWeight: decimalToNumber(item.grossWeight),
         stoneWeight: decimalToNumber(item.stoneWeight),
+        stoneGrossPrice: decimalToNumber((item as any).stoneGrossPrice),
+        stoneDiscountPercent: decimalToNumber((item as any).stoneDiscountPercent),
+        manualGrossPrice: decimalToNumber((item as any).manualGrossPrice),
+        manualDiscountPercent: decimalToNumber((item as any).manualDiscountPercent),
         netWeight: decimalToNumber(item.netWeight),
 
         quantity: Number(item.quantity),

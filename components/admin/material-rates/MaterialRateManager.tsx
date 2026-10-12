@@ -276,6 +276,19 @@ export function MaterialRateManager() {
         </div>
       </div>
 
+      {/* Precious metals rate notice */}
+      <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-4 text-xs text-amber-900 flex items-start gap-3">
+        <Sparkles className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="font-semibold text-amber-900">
+            Precious Metals Market Rates Only
+          </p>
+          <p className="text-amber-800/90 leading-relaxed">
+            Market rates are configured exclusively for precious metals (Gold, Silver). Non-precious materials (Diamonds, Pearls, Rubies, Gemstones) do not require daily market rates because their gross price and discount percentage are configured directly during product creation.
+          </p>
+        </div>
+      </div>
+
       {/* Message notification */}
       {message && (
         <div
@@ -294,7 +307,7 @@ export function MaterialRateManager() {
         <div className="space-y-6">
           {materialSummaries.length === 0 ? (
             <p className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 shadow-soft">
-              No materials configured. Please add materials in Materials first.
+              No precious metals configured. Rates are only managed for precious metals (Gold, Silver).
             </p>
           ) : (
             materialSummaries.map((mat) => {

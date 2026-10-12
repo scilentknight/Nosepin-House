@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Product` ADD COLUMN `pricingStrategy` ENUM('RATE_BASED', 'MANUAL_DISCOUNT') NOT NULL DEFAULT 'RATE_BASED',
+    ADD COLUMN `discountPercent` INTEGER NULL;

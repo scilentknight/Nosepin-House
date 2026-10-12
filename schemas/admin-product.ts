@@ -15,8 +15,12 @@ const productMaterialInputSchema = z
     grossWeight: z.number().nonnegative().nullable().optional(),
     stoneMaterialId: z.string().nullable().optional(),
     stoneWeight: z.number().nonnegative().nullable().optional(),
+    stoneGrossPrice: z.number().nonnegative().nullable().optional(),
+    stoneDiscountPercent: z.number().int().min(0).max(100).nullable().optional(),
+    manualGrossPrice: z.number().nonnegative().nullable().optional(),
+    manualDiscountPercent: z.number().int().min(0).max(100).nullable().optional(),
     netWeight: z.number().nonnegative().nullable().optional(),
-    quantity: z.number().positive("Quantity or Net Weight must be greater than 0"),
+    quantity: z.number().nonnegative("Quantity cannot be negative").default(1),
     unit: z.enum(["GRAM", "KILOGRAM", "CARAT", "PIECE", "MILLIGRAM", "MILLILITER"]),
     wastagePercent: z.number().nonnegative("Wastage percentage cannot be negative").nullable().optional().default(0),
     sortOrder: z.number().int().default(0),
@@ -45,6 +49,10 @@ const productMaterialInputSchema = z
   .refine(
     (data) => {
       if (data.stoneMaterialId && data.stoneMaterialId.trim() !== "") {
+        // If stone has manual gross price, stoneWeight can be 0 (optional deduction)
+        if (data.stoneGrossPrice !== null && data.stoneGrossPrice !== undefined && data.stoneGrossPrice > 0) {
+          return true;
+        }
         return data.stoneWeight !== null && data.stoneWeight !== undefined && data.stoneWeight > 0;
       }
       return true;
@@ -70,6 +78,7 @@ export const productSchema = z.object({
   compareAtPrice: z.number().nonnegative().nullable().optional(),
   discountType: z.enum(["PERCENTAGE", "FIXED"]).nullable().optional(),
   discountValue: z.number().nonnegative().nullable().optional(),
+  hasDiscount: z.boolean().optional().default(false),
   taxClass: z.string().max(100).nullable().optional(),
 
   stock: z.number().int().nonnegative().default(0),
@@ -110,12 +119,36 @@ export const productSchema = z.object({
   crossSellIds: z.array(z.coerce.number().int()).default([]),
   upSellIds: z.array(z.coerce.number().int()).default([]),
 
+  pricingStrategy: z.enum(["RATE_BASED", "MANUAL_DISCOUNT"]).default("RATE_BASED"),
+  discountPercent: z.coerce.number().int().nullable().optional(),
+  grossPrice: z.coerce.number().nullable().optional(),
+
   materials: z.array(productMaterialInputSchema).default([]),
   labourCharge: z.number().nonnegative("Labour charge cannot be negative").default(0),
   makingCharge: z.number().nonnegative("Making charge cannot be negative").default(0),
   otherCharge: z.number().nonnegative("Other charge cannot be negative").default(0),
   markupType: z.enum(["PERCENTAGE", "FIXED"]).nullable().optional(),
   markupValue: z.number().nonnegative("Markup value cannot be negative").nullable().optional(),
+}).superRefine((data, ctx) => {
+  if (data.pricingStrategy === "MANUAL_DISCOUNT") {
+    const effectiveGross = data.grossPrice ?? data.compareAtPrice;
+    if (effectiveGross === null || effectiveGross === undefined || Number.isNaN(effectiveGross) || effectiveGross <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Gross price is required and must be greater than 0",
+        path: ["grossPrice"],
+      });
+    }
+
+    const allowedDiscounts = [10, 20, 30, 40, 50, 60];
+    if (data.discountPercent === null || data.discountPercent === undefined || !allowedDiscounts.includes(data.discountPercent)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Discount percentage must be 10%, 20%, 30%, 40%, 50%, or 60%",
+        path: ["discountPercent"],
+      });
+    }
+  }
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

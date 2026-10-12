@@ -23,6 +23,9 @@ export async function POST(request: Request) {
     if (orderItem.order.status !== "DELIVERED") {
       return fail(400, "You can only review items from delivered orders");
     }
+    if (!orderItem.productId) {
+      return fail(400, "Product no longer exists");
+    }
 
     try {
       const review = await prisma.review.create({

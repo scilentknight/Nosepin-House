@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { convertWeightToNumber } from "@/lib/jewellery/unit-converter";
+import {
+  ALLOWED_MANUAL_DISCOUNT_PERCENTAGES,
+  DEFAULT_MANUAL_DISCOUNT_PERCENTAGE,
+} from "@/lib/jewellery/manual-pricing";
 
 import type {
   MaterialOption,
@@ -73,6 +77,10 @@ export function MaterialComposition({ values, setValues }: Props) {
         grossWeight: "",
         stoneMaterialId: "",
         stoneWeight: "0",
+        stoneGrossPrice: "",
+        stoneDiscountPercent: String(DEFAULT_MANUAL_DISCOUNT_PERCENTAGE),
+        manualGrossPrice: "",
+        manualDiscountPercent: String(DEFAULT_MANUAL_DISCOUNT_PERCENTAGE),
         netWeight: "",
         quantity: "",
         unit: "GRAM",
@@ -101,6 +109,10 @@ export function MaterialComposition({ values, setValues }: Props) {
         grossWeight: "",
         stoneMaterialId: "",
         stoneWeight: "",
+        stoneGrossPrice: "",
+        stoneDiscountPercent: "40",
+        manualGrossPrice: "",
+        manualDiscountPercent: "40",
         netWeight: "",
         quantity: "",
         wastagePercent: "0",
@@ -119,9 +131,13 @@ export function MaterialComposition({ values, setValues }: Props) {
       grossWeight: isPrecious ? "" : undefined,
       stoneMaterialId: isPrecious ? "" : undefined,
       stoneWeight: isPrecious ? "0" : undefined,
+      stoneGrossPrice: isPrecious ? "" : undefined,
+      stoneDiscountPercent: isPrecious ? "40" : undefined,
+      manualGrossPrice: !isPrecious ? "" : undefined,
+      manualDiscountPercent: !isPrecious ? "40" : undefined,
       netWeight: isPrecious ? "" : undefined,
-      quantity: isPrecious ? "" : selected.type === "OTHER" ? "1" : "",
-      wastagePercent: "0",
+      quantity: isPrecious ? "" : "1",
+      wastagePercent: isPrecious ? "0" : "0",
     });
   }
 
@@ -159,7 +175,12 @@ export function MaterialComposition({ values, setValues }: Props) {
       row.grossWeight === ""
         ? ""
         : Math.max(0, gross - convertedStone).toFixed(4);
-    updateMaterial(index, { stoneMaterialId, netWeight: net });
+    updateMaterial(index, {
+      stoneMaterialId,
+      netWeight: net,
+      stoneGrossPrice: row.stoneGrossPrice ?? "",
+      stoneDiscountPercent: row.stoneDiscountPercent ?? "40",
+    });
   }
 
   function handleStoneWeightChange(index: number, stoneStr: string) {
@@ -203,6 +224,14 @@ export function MaterialComposition({ values, setValues }: Props) {
         convertedStone: 0,
         metalCost: null,
         stoneCost: null,
+        stoneGross: 0,
+        stoneDiscount: 40,
+        stoneSellingPrice: 0,
+        manualGross: 0,
+        manualDiscount: 40,
+        manualSellingPrice: 0,
+        isStoneManual: false,
+        isMaterialManual: false,
         totalCost: null,
       };
     }
@@ -219,6 +248,25 @@ export function MaterialComposition({ values, setValues }: Props) {
     let stoneCost: number | null = null;
     let convertedStone = 0;
 
+    const isStoneManual =
+      !!stoneMaterial && stoneMaterial.type !== "PRECIOUS_METAL";
+    const stoneGross = parseFloat(item.stoneGrossPrice || "0") || 0;
+    const stoneDiscount =
+      parseFloat(item.stoneDiscountPercent || "40") || 40;
+    const stoneSellingPrice =
+      stoneGross > 0
+        ? Math.round(stoneGross * (1 - stoneDiscount / 100) * 100) / 100
+        : 0;
+
+    const isMaterialManual = material.type !== "PRECIOUS_METAL";
+    const manualGross = parseFloat(item.manualGrossPrice || "0") || 0;
+    const manualDiscount =
+      parseFloat(item.manualDiscountPercent || "40") || 40;
+    const manualSellingPrice =
+      manualGross > 0
+        ? Math.round(manualGross * (1 - manualDiscount / 100) * 100) / 100
+        : 0;
+
     if (material.type === "PRECIOUS_METAL") {
       const gross = parseFloat(item.grossWeight || "0") || 0;
       const stone = parseFloat(item.stoneWeight || "0") || 0;
@@ -233,14 +281,24 @@ export function MaterialComposition({ values, setValues }: Props) {
       if (primaryRate !== null) {
         metalCost = net * (1 + wastage / 100) * primaryRate;
       }
-      if (item.stoneMaterialId && stone > 0 && stoneRate !== null) {
-        stoneCost = stone * stoneRate;
+
+      if (item.stoneMaterialId) {
+        if (stoneGross > 0) {
+          stoneCost = stoneSellingPrice;
+        } else if (stone > 0 && stoneRate !== null) {
+          stoneCost = stone * stoneRate;
+        }
       }
     } else {
-      const qty = parseFloat(item.quantity || "0") || 0;
-      const wastage = parseFloat(item.wastagePercent || "0") || 0;
-      if (primaryRate !== null) {
-        metalCost = qty * (1 + wastage / 100) * primaryRate;
+      // Non-precious material
+      if (manualGross > 0) {
+        metalCost = manualSellingPrice;
+      } else {
+        const qty = parseFloat(item.quantity || "0") || 0;
+        const wastage = parseFloat(item.wastagePercent || "0") || 0;
+        if (primaryRate !== null) {
+          metalCost = qty * (1 + wastage / 100) * primaryRate;
+        }
       }
     }
 
@@ -256,6 +314,14 @@ export function MaterialComposition({ values, setValues }: Props) {
       convertedStone,
       metalCost,
       stoneCost,
+      stoneGross,
+      stoneDiscount,
+      stoneSellingPrice,
+      manualGross,
+      manualDiscount,
+      manualSellingPrice,
+      isStoneManual,
+      isMaterialManual,
       totalCost,
     };
   }
@@ -293,7 +359,7 @@ export function MaterialComposition({ values, setValues }: Props) {
             Material Composition
           </h2>
           <p className="mt-0.5 text-sm text-gray-500">
-            Add every material used to manufacture this product.
+            Add every material used to manufacture this product. Gold and silver use live daily rates; diamonds, gems, and stones use gross price with selectable discount.
           </p>
         </div>
 
@@ -350,10 +416,8 @@ export function MaterialComposition({ values, setValues }: Props) {
 
         const grossNum = parseFloat(item.grossWeight || "0") || 0;
         const stoneNum = parseFloat(item.stoneWeight || "0") || 0;
-        // const isStoneError = isPrecious && stoneNum > grossNum && grossNum > 0;
         const isStoneError =
           isPrecious && grossNum > 0 && calcs.convertedStone > grossNum;
-        // Filter stone options from database materials (excluding current material)
         const stoneOptions = materials.filter((m) => m.id !== item.materialId);
 
         return (
@@ -363,7 +427,7 @@ export function MaterialComposition({ values, setValues }: Props) {
           >
             {/* Card header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-gray-900">
                   {material ? material.name : `Material ${index + 1}`}
                 </span>
@@ -372,10 +436,18 @@ export function MaterialComposition({ values, setValues }: Props) {
                     {material.type.replace("_", " ")}
                   </span>
                 )}
+                {/* Embedded stone badge */}
                 {calcs.stoneMaterial && (
                   <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 border border-amber-200/60">
-                    + {calcs.stoneMaterial.name} ({item.stoneWeight || "0"}{" "}
-                    {calcs.stoneMaterial.unit})
+                    + {calcs.stoneMaterial.name}
+                    {stoneNum > 0 ? ` (${stoneNum} ${calcs.stoneMaterial.unit})` : ""}
+                    {calcs.stoneGross > 0 ? ` • NPR ${calcs.stoneSellingPrice.toLocaleString("en-NP")} (${calcs.stoneDiscount}% OFF)` : ""}
+                  </span>
+                )}
+                {/* Non-precious manual badge */}
+                {!isPrecious && material && calcs.manualGross > 0 && (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
+                    NPR {calcs.manualSellingPrice.toLocaleString("en-NP")} ({calcs.manualDiscount}% OFF)
                   </span>
                 )}
               </div>
@@ -414,7 +486,7 @@ export function MaterialComposition({ values, setValues }: Props) {
                   <option value="">Select material…</option>
                   {materials.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.name}
+                      {m.name} ({m.type.replace("_", " ")})
                     </option>
                   ))}
                 </select>
@@ -476,7 +548,7 @@ export function MaterialComposition({ values, setValues }: Props) {
                     <label className={labelCls}>
                       Stone Type
                       <span
-                        title="Select an embedded stone/material type to price the stone at its own rate."
+                        title="Select an embedded stone (e.g. Diamond, Pearl, Ruby) to specify gross price and discount percentage."
                         className="ml-1 cursor-help text-gray-400"
                       >
                         &#9432;
@@ -492,7 +564,7 @@ export function MaterialComposition({ values, setValues }: Props) {
                       <option value="">None (No embedded stone)</option>
                       {stoneOptions.map((m) => (
                         <option key={m.id} value={m.id}>
-                          {m.name} ({m.unit})
+                          {m.name} ({m.unit} - {m.type.replace("_", " ")})
                         </option>
                       ))}
                     </select>
@@ -540,13 +612,88 @@ export function MaterialComposition({ values, setValues }: Props) {
                           </span>
                         ) : (
                           <span>
-                            Priced at {calcs.stoneMaterial.name} rate (
-                            {calcs.stoneMaterial.unit})
+                            {calcs.stoneMaterial.name} deducted from gross weight
                           </span>
                         )}
                       </p>
                     )}
                   </div>
+
+                  {/* ── Embedded Stone Manual Pricing Section (Diamond, Gemstone, etc.) ── */}
+                  {item.stoneMaterialId && calcs.stoneMaterial && calcs.isStoneManual && (
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-3 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/70 via-orange-50/30 to-amber-50/40 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-amber-900">
+                          💎
+                        </span>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-amber-950">
+                          {calcs.stoneMaterial.name} Pricing
+                        </h4>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200 shadow-xs">
+                          {calcs.stoneMaterial.type.replace("_", " ")}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {/* Stone Gross Price */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className={labelCls}>Gross Price (NPR)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={item.stoneGrossPrice ?? ""}
+                            onChange={(e) =>
+                              updateMaterial(index, { stoneGrossPrice: e.target.value })
+                            }
+                            placeholder="e.g. 50000"
+                            className={inputCls}
+                          />
+                        </div>
+
+                        {/* Stone Discount Percentage */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className={labelCls}>Discount Percentage</label>
+                          <select
+                            value={item.stoneDiscountPercent ?? "40"}
+                            onChange={(e) =>
+                              updateMaterial(index, { stoneDiscountPercent: e.target.value })
+                            }
+                            className={inputCls}
+                          >
+                            {ALLOWED_MANUAL_DISCOUNT_PERCENTAGES.map((pct) => (
+                              <option key={pct} value={pct}>
+                                {pct}% OFF {pct === 40 ? "(Standard)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Stone Selling Price (read-only) */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className={labelCls}>Selling Price (NPR)</label>
+                          <input
+                            type="text"
+                            readOnly
+                            value={
+                              calcs.stoneGross > 0
+                                ? `NPR ${calcs.stoneSellingPrice.toLocaleString("en-NP")}`
+                                : "—"
+                            }
+                            placeholder="Calculated after discount"
+                            className={`${readOnlyCls} font-bold text-emerald-800 bg-emerald-50/60 border-emerald-200`}
+                          />
+                          {calcs.stoneGross > 0 && (
+                            <p className="text-[11px] text-emerald-700">
+                              Discount: NPR{" "}
+                              {(calcs.stoneGross - calcs.stoneSellingPrice).toLocaleString("en-NP")}{" "}
+                              ({calcs.stoneDiscount}% OFF)
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Net Metal Weight (auto) */}
                   <div className="flex flex-col gap-1.5">
@@ -581,38 +728,82 @@ export function MaterialComposition({ values, setValues }: Props) {
                 </>
               )}
 
-              {/* ── Non-precious quantity field ──────────────────── */}
+              {/* ── Non-precious material fields (Diamond, Gemstone, Pearl, Ruby, etc.) ── */}
               {!isPrecious && material && (
                 <>
+                  {/* Quantity / Weight */}
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Quantity ({item.unit})</label>
+                    <label className={labelCls}>
+                      Quantity / Weight ({item.unit})
+                    </label>
                     <input
                       type="number"
                       min="0"
-                      step="0.000001"
+                      step="0.0001"
                       value={item.quantity}
                       onChange={(e) =>
                         updateMaterial(index, { quantity: e.target.value })
                       }
-                      placeholder="0.000"
+                      placeholder="1"
                       className={inputCls}
                     />
                   </div>
 
+                  {/* Gross Price */}
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Wastage %</label>
+                    <label className={labelCls}>Gross Price (NPR)</label>
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
-                      value={item.wastagePercent ?? "0"}
+                      step="1"
+                      value={item.manualGrossPrice ?? ""}
                       onChange={(e) =>
-                        updateMaterial(index, {
-                          wastagePercent: e.target.value,
-                        })
+                        updateMaterial(index, { manualGrossPrice: e.target.value })
                       }
+                      placeholder="e.g. 75000"
                       className={inputCls}
                     />
+                  </div>
+
+                  {/* Discount Percentage Dropdown */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelCls}>Discount Percentage</label>
+                    <select
+                      value={item.manualDiscountPercent ?? "40"}
+                      onChange={(e) =>
+                        updateMaterial(index, { manualDiscountPercent: e.target.value })
+                      }
+                      className={inputCls}
+                    >
+                      {ALLOWED_MANUAL_DISCOUNT_PERCENTAGES.map((pct) => (
+                        <option key={pct} value={pct}>
+                          {pct}% OFF {pct === 40 ? "(Standard)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Selling Price (read-only) */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className={labelCls}>Selling Price (NPR)</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={
+                        calcs.manualGross > 0
+                          ? `NPR ${calcs.manualSellingPrice.toLocaleString("en-NP")}`
+                          : "—"
+                      }
+                      placeholder="Calculated after discount"
+                      className={`${readOnlyCls} font-bold text-emerald-800 bg-emerald-50/60 border-emerald-200`}
+                    />
+                    {calcs.manualGross > 0 && (
+                      <p className="text-[11px] text-emerald-700">
+                        Discount: NPR{" "}
+                        {(calcs.manualGross - calcs.manualSellingPrice).toLocaleString("en-NP")}{" "}
+                        ({calcs.manualDiscount}% OFF)
+                      </p>
+                    )}
                   </div>
                 </>
               )}
@@ -621,57 +812,77 @@ export function MaterialComposition({ values, setValues }: Props) {
             {/* Card footer — rate + cost */}
             <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/60 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-1">
-                <span className="text-sm text-gray-600">
-                  {material?.name || "Material"} rate:{" "}
-                  {calcs.primaryRate !== null ? (
-                    <strong className="text-gray-900">
-                      NPR {calcs.primaryRate.toLocaleString("en-NP")} /{" "}
-                      {item.unit}
-                    </strong>
-                  ) : (
-                    <span className="text-gray-400">
-                      {item.materialId ? "No active rate" : "—"}
+                {isPrecious ? (
+                  <>
+                    <span className="text-sm text-gray-600">
+                      {material?.name || "Material"} rate:{" "}
+                      {calcs.primaryRate !== null ? (
+                        <strong className="text-gray-900">
+                          NPR {calcs.primaryRate.toLocaleString("en-NP")} /{" "}
+                          {item.unit}
+                        </strong>
+                      ) : (
+                        <span className="text-gray-400">
+                          {item.materialId ? "No active rate" : "—"}
+                        </span>
+                      )}
                     </span>
-                  )}
-                </span>
 
-                {calcs.stoneMaterial && (
-                  <span className="text-xs text-slate-600">
-                    {calcs.stoneMaterial.name} rate:{" "}
-                    {calcs.stoneRate !== null ? (
+                    {calcs.stoneMaterial && (
+                      <span className="text-xs text-slate-600">
+                        {calcs.stoneMaterial.name}:{" "}
+                        {calcs.stoneGross > 0 ? (
+                          <strong className="text-amber-800">
+                            Gross NPR {calcs.stoneGross.toLocaleString("en-NP")} - {calcs.stoneDiscount}% = NPR {calcs.stoneSellingPrice.toLocaleString("en-NP")}
+                          </strong>
+                        ) : calcs.stoneRate !== null ? (
+                          <strong className="text-gray-900">
+                            NPR {calcs.stoneRate.toLocaleString("en-NP")} / {calcs.stoneMaterial.unit}
+                          </strong>
+                        ) : (
+                          <span className="text-gray-400">Enter gross price above</span>
+                        )}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-sm text-gray-600">
+                    {material?.name || "Material"}:{" "}
+                    {calcs.manualGross > 0 ? (
+                      <strong className="text-emerald-800">
+                        Gross NPR {calcs.manualGross.toLocaleString("en-NP")} - {calcs.manualDiscount}% = NPR {calcs.manualSellingPrice.toLocaleString("en-NP")}
+                      </strong>
+                    ) : calcs.primaryRate !== null ? (
                       <strong className="text-gray-900">
-                        NPR {calcs.stoneRate.toLocaleString("en-NP")} /{" "}
-                        {calcs.stoneMaterial.unit}
+                        NPR {calcs.primaryRate.toLocaleString("en-NP")} / {item.unit}
                       </strong>
                     ) : (
-                      <span className="text-gray-400">No active rate</span>
+                      <span className="text-gray-400">Enter gross price above</span>
                     )}
                   </span>
                 )}
               </div>
 
               <div className="flex flex-col items-start sm:items-end gap-0.5">
-                {calcs.stoneMaterial &&
-                  calcs.stoneCost !== null &&
-                  calcs.stoneCost > 0 && (
-                    <div className="text-xs text-slate-500">
-                      <span>
-                        Metal: NPR{" "}
-                        {(calcs.metalCost ?? 0).toLocaleString("en-NP", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                      <span className="mx-1.5">+</span>
-                      <span>
-                        Stone: NPR{" "}
-                        {calcs.stoneCost.toLocaleString("en-NP", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
-                  )}
+                {isPrecious && calcs.stoneMaterial && calcs.stoneCost !== null && calcs.stoneCost > 0 && (
+                  <div className="text-xs text-slate-500">
+                    <span>
+                      Metal: NPR{" "}
+                      {(calcs.metalCost ?? 0).toLocaleString("en-NP", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="mx-1.5">+</span>
+                    <span>
+                      Stone: NPR{" "}
+                      {calcs.stoneCost.toLocaleString("en-NP", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                )}
 
                 <span className="text-sm text-gray-600">
                   Line Total:{" "}

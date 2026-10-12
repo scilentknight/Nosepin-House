@@ -23,6 +23,7 @@ function mapPromoProduct(p: {
   slug: string;
   price: unknown;
   compareAtPrice: unknown;
+  discountPercent?: unknown;
   colorway: string;
   featuredImage: string | null;
   images: { url: string | null }[];
@@ -34,6 +35,7 @@ function mapPromoProduct(p: {
     slug: p.slug,
     price: Number(p.price),
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+    discountPercent: (p as any).discountPercent != null ? Number((p as any).discountPercent) : null,
     colorway: p.colorway,
 
     // Fall back to the first gallery image when no featured image is set.
@@ -50,6 +52,8 @@ function mapProductCard(
     slug: string;
     price: unknown;
     compareAtPrice: unknown;
+    discountPercent?: unknown;
+    pricingStrategy?: string | null;
     colorway: string;
     stock: number;
     featuredImage: string | null;
@@ -73,6 +77,8 @@ function mapProductCard(
     slug: p.slug,
     price,
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+    discountPercent: (p as any).discountPercent != null ? Number((p as any).discountPercent) : null,
+    pricingStrategy: (p as any).pricingStrategy ?? undefined,
     colorway: p.colorway,
     stock: p.stock,
     image: p.featuredImage ?? p.images[0]?.url ?? null,

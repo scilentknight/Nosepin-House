@@ -10,6 +10,7 @@ export interface PromoProduct {
   slug: string;
   price: number;
   compareAtPrice: number | null;
+  discountPercent?: number | null;
   colorway: string;
   featuredImage: string | null;
   brandName: string | null;
@@ -79,15 +80,25 @@ export function PromoProductCard({
           {product.name}
         </p>
 
-        <div className="mt-0.5 flex items-baseline gap-2">
+        <div className="mt-0.5 flex flex-wrap items-baseline gap-1.5">
           <span className="text-sm font-bold text-primary-700">
             {formatPrice(product.price)}
           </span>
 
           {onSale && product.compareAtPrice != null && (
-            <span className="text-xs text-gray-400 line-through">
-              {formatPrice(product.compareAtPrice)}
-            </span>
+            <>
+              <span className="text-xs text-gray-400 line-through">
+                {formatPrice(product.compareAtPrice)}
+              </span>
+              <span className="rounded bg-rose-50 px-1 py-0.5 text-[10px] font-bold text-rose-600">
+                {product.discountPercent ??
+                  Math.round(
+                    ((product.compareAtPrice - product.price) /
+                      product.compareAtPrice) *
+                      100,
+                  )}% OFF
+              </span>
+            </>
           )}
         </div>
       </div>

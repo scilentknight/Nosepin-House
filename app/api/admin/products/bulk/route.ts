@@ -14,7 +14,34 @@ export async function POST(request: Request) {
 
     switch (action) {
       case "delete":
-        await prisma.product.updateMany({ where: { id: { in: ids } }, data: { deletedAt: new Date() } });
+        await prisma.$transaction(async (tx) => {
+          await tx.orderItem.updateMany({
+            where: { productId: { in: ids } },
+            data: { productId: null },
+          });
+          await tx.cartItem.deleteMany({ where: { productId: { in: ids } } });
+          await tx.wishlistItem.deleteMany({ where: { productId: { in: ids } } });
+          await tx.review.deleteMany({ where: { productId: { in: ids } } });
+          await tx.productRelation.deleteMany({
+            where: { OR: [{ productId: { in: ids } }, { relatedId: { in: ids } }] },
+          });
+          const variants = await tx.productVariant.findMany({
+            where: { productId: { in: ids } },
+            select: { id: true },
+          });
+          const variantIds = variants.map((v) => v.id);
+          if (variantIds.length > 0) {
+            await tx.productVariantValue.deleteMany({
+              where: { variantId: { in: variantIds } },
+            });
+            await tx.productVariant.deleteMany({
+              where: { id: { in: variantIds } },
+            });
+          }
+          await tx.productMaterial.deleteMany({ where: { productId: { in: ids } } });
+          await tx.productImage.deleteMany({ where: { productId: { in: ids } } });
+          await tx.product.deleteMany({ where: { id: { in: ids } } });
+        });
         break;
       case "restore":
         await prisma.product.updateMany({ where: { id: { in: ids } }, data: { deletedAt: null } });

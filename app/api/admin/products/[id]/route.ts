@@ -5,6 +5,7 @@ import { ensureUniqueSlug } from "@/lib/slug";
 import { productSchema } from "@/schemas/admin-product";
 import { syncRelations } from "@/lib/product-relations";
 import { calculateProductPrice } from "@/lib/jewellery/calculate-product-price";
+import { calculateManualSellingPrice } from "@/lib/jewellery/manual-pricing";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -31,6 +32,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       price: Number(product.price),
       costPrice: product.costPrice ? Number(product.costPrice) : null,
       compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+      grossPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+      pricingStrategy: product.pricingStrategy,
+      discountPercent: product.discountPercent,
       discountValue: product.discountValue ? Number(product.discountValue) : null,
       weight: product.weight ? Number(product.weight) : null,
       length: product.length ? Number(product.length) : null,
@@ -48,6 +52,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? String(m.grossWeight) : "",
         stoneMaterialId: m.stoneMaterialId ?? "",
         stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? String(m.stoneWeight) : "",
+        stoneGrossPrice: m.stoneGrossPrice !== null && m.stoneGrossPrice !== undefined ? String(m.stoneGrossPrice) : "",
+        stoneDiscountPercent: m.stoneDiscountPercent !== null && m.stoneDiscountPercent !== undefined ? String(m.stoneDiscountPercent) : "40",
+        manualGrossPrice: m.manualGrossPrice !== null && m.manualGrossPrice !== undefined ? String(m.manualGrossPrice) : "",
+        manualDiscountPercent: m.manualDiscountPercent !== null && m.manualDiscountPercent !== undefined ? String(m.manualDiscountPercent) : "40",
         netWeight: m.netWeight !== null && m.netWeight !== undefined ? String(m.netWeight) : "",
         quantity: String(m.quantity),
         unit: m.unit,
@@ -87,9 +95,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     let finalPrice = data.price ?? Number(existing.price);
     let finalCostPrice = data.costPrice ?? (existing.costPrice ? Number(existing.costPrice) : null);
+    let finalCompareAtPrice = data.compareAtPrice ?? existing.compareAtPrice;
+    let finalDiscountType = data.discountType ?? existing.discountType;
+    let finalDiscountValue = data.discountValue ?? existing.discountValue;
+    let finalDiscountPercent = data.discountPercent ?? existing.discountPercent;
+    let finalHasDiscount = data.hasDiscount ?? existing.hasDiscount;
+    let finalIsOnSale = data.isOnSale ?? existing.isOnSale;
     let pricingUpdatedAt = existing.pricingUpdatedAt;
 
-    if (data.materials && data.materials.length > 0) {
+    if (data.pricingStrategy === "MANUAL_DISCOUNT") {
+      const grossPrice = Number(data.grossPrice ?? data.compareAtPrice ?? existing.compareAtPrice);
+      const discountPercent = Number(data.discountPercent ?? existing.discountPercent ?? 40);
+      const calc = calculateManualSellingPrice(grossPrice, discountPercent);
+
+      finalPrice = calc.sellingPrice;
+      finalCompareAtPrice = calc.grossPrice;
+      finalCostPrice = calc.grossPrice;
+      finalDiscountPercent = discountPercent;
+      finalDiscountType = "PERCENTAGE";
+      finalDiscountValue = discountPercent;
+      finalHasDiscount = true;
+      finalIsOnSale = true;
+      pricingUpdatedAt = new Date();
+    } else if (data.pricingStrategy === "RATE_BASED" && data.materials && data.materials.length > 0) {
       const jewelleryPricing = await calculateProductPrice(
         data.materials.map((m) => ({
           materialId: m.materialId,
@@ -97,6 +125,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           grossWeight: m.grossWeight,
           stoneMaterialId: m.stoneMaterialId,
           stoneWeight: m.stoneWeight,
+          stoneGrossPrice: m.stoneGrossPrice,
+          stoneDiscountPercent: m.stoneDiscountPercent,
+          manualGrossPrice: m.manualGrossPrice,
+          manualDiscountPercent: m.manualDiscountPercent,
           netWeight: m.netWeight,
           quantity: m.quantity,
           unit: m.unit,
@@ -127,11 +159,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           brandId: data.brandId || null,
           shortDescription: data.shortDescription || null,
           fullDescription: data.fullDescription,
+          pricingStrategy: data.pricingStrategy,
+          discountPercent: finalDiscountPercent,
           costPrice: finalCostPrice,
           price: finalPrice,
-          compareAtPrice: data.compareAtPrice ?? null,
-          discountType: data.discountType ?? null,
-          discountValue: data.discountValue ?? null,
+          compareAtPrice: finalCompareAtPrice,
+          discountType: finalDiscountType,
+          discountValue: finalDiscountValue,
+          hasDiscount: finalHasDiscount,
           taxClass: data.taxClass || null,
           stock: data.stock,
           lowStockAlert: data.lowStockAlert ?? null,
@@ -146,7 +181,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           isFeatured: data.isFeatured,
           isBestSeller: data.isBestSeller,
           isNewArrival: data.isNewArrival,
-          isOnSale: data.isOnSale,
+          isOnSale: finalIsOnSale,
           isTrending: data.isTrending,
           isSpecial: data.isSpecial,
           isWeekly: data.isWeekly,
@@ -172,6 +207,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
               grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? m.grossWeight : null,
               stoneMaterialId: m.stoneMaterialId && m.stoneMaterialId.trim() !== "" ? m.stoneMaterialId : null,
               stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? m.stoneWeight : null,
+              stoneGrossPrice: m.stoneGrossPrice !== null && m.stoneGrossPrice !== undefined ? m.stoneGrossPrice : null,
+              stoneDiscountPercent: m.stoneDiscountPercent !== null && m.stoneDiscountPercent !== undefined ? m.stoneDiscountPercent : null,
+              manualGrossPrice: m.manualGrossPrice !== null && m.manualGrossPrice !== undefined ? m.manualGrossPrice : null,
+              manualDiscountPercent: m.manualDiscountPercent !== null && m.manualDiscountPercent !== undefined ? m.manualDiscountPercent : null,
               netWeight: m.netWeight !== null && m.netWeight !== undefined ? m.netWeight : null,
               quantity: m.quantity,
               unit: m.unit,
@@ -209,8 +248,53 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) return fail(404, "Product not found");
 
-    await prisma.product.update({ where: { id }, data: { deletedAt: new Date() } });
-    return ok(null, "Product moved to trash");
+    await prisma.$transaction(async (tx) => {
+      // 1. Unlink order items (preserve historical order snapshot while clearing product reference)
+      await tx.orderItem.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+
+      // 2. Delete cart items
+      await tx.cartItem.deleteMany({ where: { productId: id } });
+
+      // 3. Delete wishlist items
+      await tx.wishlistItem.deleteMany({ where: { productId: id } });
+
+      // 4. Delete reviews
+      await tx.review.deleteMany({ where: { productId: id } });
+
+      // 5. Delete product relations
+      await tx.productRelation.deleteMany({
+        where: { OR: [{ productId: id }, { relatedId: id }] },
+      });
+
+      // 6. Delete variants & attribute values
+      const variants = await tx.productVariant.findMany({
+        where: { productId: id },
+        select: { id: true },
+      });
+      const variantIds = variants.map((v) => v.id);
+      if (variantIds.length > 0) {
+        await tx.productVariantValue.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+        await tx.productVariant.deleteMany({
+          where: { id: { in: variantIds } },
+        });
+      }
+
+      // 7. Delete materials
+      await tx.productMaterial.deleteMany({ where: { productId: id } });
+
+      // 8. Delete images
+      await tx.productImage.deleteMany({ where: { productId: id } });
+
+      // 9. Delete the product itself
+      await tx.product.delete({ where: { id } });
+    });
+
+    return ok(null, `Product "${existing.name}" deleted successfully`);
   } catch (error) {
     return handleApiError(error);
   }

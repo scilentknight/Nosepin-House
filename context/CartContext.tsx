@@ -405,6 +405,8 @@ export interface CartLine {
   name: string;
   slug: string;
   price: number;
+  compareAtPrice?: number | null;
+  discountPercent?: number | null;
   image: string | null;
   colorway: string;
   stock: number;
@@ -541,12 +543,15 @@ async function hydrateGuestLines(guestLines: GuestLine[]): Promise<CartLine[]> {
     name: string;
     slug: string;
     price: number;
+    compareAtPrice?: number | null;
+    discountPercent?: number | null;
     image: string | null;
     colorway: string;
     stock: number;
     variants: {
       id: number;
       price: number | null;
+      compareAtPrice?: number | null;
       stock: number;
       image: string | null;
       label: string | null;
@@ -554,7 +559,7 @@ async function hydrateGuestLines(guestLines: GuestLine[]): Promise<CartLine[]> {
   }[] = json.data ?? [];
 
   return guestLines
-    .map((guestLine) => {
+    .map((guestLine): CartLine | null => {
       const product = products.find((item) => item.id === guestLine.productId);
 
       if (!product) return null;
@@ -567,13 +572,25 @@ async function hydrateGuestLines(guestLines: GuestLine[]): Promise<CartLine[]> {
         return null;
       }
 
+      const price = variant?.price ?? product.price;
+      const compareAt = variant?.compareAtPrice ?? product.compareAtPrice;
+      const compareAtPrice = compareAt != null ? Number(compareAt) : null;
+      const discountPercent =
+        product.discountPercent != null
+          ? Number(product.discountPercent)
+          : compareAtPrice && compareAtPrice > price
+            ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+            : null;
+
       return {
         productId: product.id,
         variantId: guestLine.variantId,
         variantLabel: variant?.label ?? null,
         name: product.name,
         slug: product.slug,
-        price: variant?.price ?? product.price,
+        price,
+        compareAtPrice,
+        discountPercent,
         image: variant?.image ?? product.image,
         colorway: product.colorway,
         stock: variant?.stock ?? product.stock,

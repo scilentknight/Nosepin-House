@@ -8,6 +8,7 @@ import { generateSku } from "@/lib/sku";
 import { syncRelations } from "@/lib/product-relations";
 import { productSchema } from "@/schemas/admin-product";
 import { calculateProductPrice } from "@/lib/jewellery/calculate-product-price";
+import { calculateManualSellingPrice } from "@/lib/jewellery/manual-pricing";
 
 export async function GET(request: Request) {
   try {
@@ -57,6 +58,9 @@ export async function GET(request: Request) {
       price: Number(p.price),
       costPrice: p.costPrice ? Number(p.costPrice) : null,
       compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+      grossPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+      pricingStrategy: p.pricingStrategy,
+      discountPercent: p.discountPercent,
       labourCharge: Number(p.labourCharge),
       makingCharge: Number(p.makingCharge),
       otherCharge: Number(p.otherCharge),
@@ -82,9 +86,29 @@ export async function POST(request: Request) {
 
     let finalPrice = data.price ?? 0;
     let finalCostPrice = data.costPrice ?? null;
+    let finalCompareAtPrice = data.compareAtPrice ?? null;
+    let finalDiscountType = data.discountType ?? null;
+    let finalDiscountValue = data.discountValue ?? null;
+    let finalDiscountPercent: number | null = null;
+    let finalHasDiscount = data.hasDiscount ?? false;
+    let finalIsOnSale = data.isOnSale ?? false;
     let pricingUpdatedAt: Date | null = null;
 
-    if (data.materials && data.materials.length > 0) {
+    if (data.pricingStrategy === "MANUAL_DISCOUNT") {
+      const grossPrice = Number(data.grossPrice ?? data.compareAtPrice);
+      const discountPercent = Number(data.discountPercent ?? 40);
+      const calc = calculateManualSellingPrice(grossPrice, discountPercent);
+
+      finalPrice = calc.sellingPrice;
+      finalCompareAtPrice = calc.grossPrice;
+      finalCostPrice = calc.grossPrice;
+      finalDiscountPercent = discountPercent;
+      finalDiscountType = "PERCENTAGE";
+      finalDiscountValue = discountPercent;
+      finalHasDiscount = true;
+      finalIsOnSale = true;
+      pricingUpdatedAt = new Date();
+    } else if (data.materials && data.materials.length > 0) {
       const jewelleryPricing = await calculateProductPrice(
         data.materials.map((m) => ({
           materialId: m.materialId,
@@ -92,6 +116,10 @@ export async function POST(request: Request) {
           grossWeight: m.grossWeight,
           stoneMaterialId: m.stoneMaterialId,
           stoneWeight: m.stoneWeight,
+          stoneGrossPrice: m.stoneGrossPrice,
+          stoneDiscountPercent: m.stoneDiscountPercent,
+          manualGrossPrice: m.manualGrossPrice,
+          manualDiscountPercent: m.manualDiscountPercent,
           netWeight: m.netWeight,
           quantity: m.quantity,
           unit: m.unit,
@@ -118,11 +146,14 @@ export async function POST(request: Request) {
           brandId: data.brandId || null,
           shortDescription: data.shortDescription || null,
           fullDescription: data.fullDescription,
+          pricingStrategy: data.pricingStrategy,
+          discountPercent: finalDiscountPercent,
           costPrice: finalCostPrice,
           price: finalPrice,
-          compareAtPrice: data.compareAtPrice ?? null,
-          discountType: data.discountType ?? null,
-          discountValue: data.discountValue ?? null,
+          compareAtPrice: finalCompareAtPrice,
+          discountType: finalDiscountType,
+          discountValue: finalDiscountValue,
+          hasDiscount: finalHasDiscount,
           taxClass: data.taxClass || null,
           stock: data.stock,
           lowStockAlert: data.lowStockAlert ?? null,
@@ -137,7 +168,7 @@ export async function POST(request: Request) {
           isFeatured: data.isFeatured,
           isBestSeller: data.isBestSeller,
           isNewArrival: data.isNewArrival,
-          isOnSale: data.isOnSale,
+          isOnSale: finalIsOnSale,
           isTrending: data.isTrending,
           isSpecial: data.isSpecial,
           isWeekly: data.isWeekly,
@@ -163,6 +194,10 @@ export async function POST(request: Request) {
               grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? m.grossWeight : null,
               stoneMaterialId: m.stoneMaterialId && m.stoneMaterialId.trim() !== "" ? m.stoneMaterialId : null,
               stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? m.stoneWeight : null,
+              stoneGrossPrice: m.stoneGrossPrice !== null && m.stoneGrossPrice !== undefined ? m.stoneGrossPrice : null,
+              stoneDiscountPercent: m.stoneDiscountPercent !== null && m.stoneDiscountPercent !== undefined ? m.stoneDiscountPercent : null,
+              manualGrossPrice: m.manualGrossPrice !== null && m.manualGrossPrice !== undefined ? m.manualGrossPrice : null,
+              manualDiscountPercent: m.manualDiscountPercent !== null && m.manualDiscountPercent !== undefined ? m.manualDiscountPercent : null,
               netWeight: m.netWeight !== null && m.netWeight !== undefined ? m.netWeight : null,
               quantity: m.quantity,
               unit: m.unit,

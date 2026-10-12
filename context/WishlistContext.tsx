@@ -17,6 +17,8 @@ export interface WishlistLine {
   name: string;
   slug: string;
   price: number;
+  compareAtPrice?: number | null;
+  discountPercent?: number | null;
   image: string | null;
   colorway: string;
   stock: number;

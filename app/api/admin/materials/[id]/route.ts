@@ -136,31 +136,38 @@ export async function DELETE(
       return fail(404, "Material not found");
     }
 
-    // Check usage in ProductMaterial and MaterialRate
-    const productCount = await prisma.productMaterial.count({
-      where: { materialId: id },
-    });
-
-    const rateCount = await prisma.materialRate.count({
-      where: { materialId: id },
-    });
-
-    if (productCount > 0 || rateCount > 0) {
-      // Instead of hard delete, deactivate to protect historical business data
-      const deactivated = await prisma.material.update({
-        where: { id },
-        data: { isActive: false },
+    // Completely delete the material and cascade delete/unlink all relations
+    await prisma.$transaction(async (tx) => {
+      // 1. Clear stone references where this material was used as an embedded stone
+      await tx.productMaterial.updateMany({
+        where: { stoneMaterialId: id },
+        data: {
+          stoneMaterialId: null,
+          stoneWeight: null,
+          stoneGrossPrice: null,
+          stoneDiscountPercent: null,
+        },
       });
 
-      return ok(
-        deactivated,
-        `Material "${material.name}" is referenced by ${productCount} products and ${rateCount} historical rates. It has been deactivated instead of deleted to protect historical data.`,
-      );
-    }
+      // 2. Delete any product material rows using this material as primary
+      await tx.productMaterial.deleteMany({
+        where: { materialId: id },
+      });
 
-    // Safe to delete physically
-    await prisma.material.delete({
-      where: { id },
+      // 3. Delete historical rates for this material
+      await tx.materialRate.deleteMany({
+        where: { materialId: id },
+      });
+
+      // 4. Delete purities for this material
+      await tx.materialPurity.deleteMany({
+        where: { materialId: id },
+      });
+
+      // 5. Delete the material itself
+      await tx.material.delete({
+        where: { id },
+      });
     });
 
     return ok({ id }, `Material "${material.name}" deleted successfully`);

@@ -93,6 +93,8 @@ export interface ProductCardData {
   slug: string;
   price: number;
   compareAtPrice?: number | null;
+  discountPercent?: number | null;
+  pricingStrategy?: string;
 
   // Product's main/featured image
   featuredImage?: string | null;
@@ -125,7 +127,16 @@ export function ProductCard({
   linkQuery?: string;
 }) {
   const onSale =
-    product.compareAtPrice && product.compareAtPrice > product.price;
+    product.compareAtPrice != null && product.compareAtPrice > product.price;
+
+  const discountPercentage =
+    product.discountPercent ??
+    (onSale && product.compareAtPrice
+      ? Math.round(
+          ((product.compareAtPrice - product.price) / product.compareAtPrice) *
+            100,
+        )
+      : null);
 
   /*
    * IMPORTANT:
@@ -165,8 +176,8 @@ export function ProductCard({
         )}
 
         {onSale && (
-          <span className="absolute right-5 top-5 rounded-full bg-secondary-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
-            Sale
+          <span className="absolute right-5 top-5 rounded-full bg-rose-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+            {discountPercentage ? `${discountPercentage}% OFF` : "Sale"}
           </span>
         )}
 
@@ -191,15 +202,22 @@ export function ProductCard({
           <StarRating rating={product.rating} count={product.reviewCount} />
         )}
 
-        <div className="mt-1 flex items-baseline gap-2">
+        <div className="mt-1 flex flex-wrap items-baseline gap-2">
           <span className="text-lg font-bold text-primary-700">
             {formatPrice(product.price)}
           </span>
 
           {onSale && (
-            <span className="text-sm text-gray-400 line-through">
-              {formatPrice(product.compareAtPrice as number)}
-            </span>
+            <>
+              <span className="text-xs text-gray-400 line-through font-normal">
+                {formatPrice(product.compareAtPrice as number)}
+              </span>
+              {discountPercentage && (
+                <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[11px] font-semibold text-rose-600">
+                  {discountPercentage}% OFF
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>

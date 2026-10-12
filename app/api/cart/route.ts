@@ -20,6 +20,8 @@ function toLines(
       name: string;
       slug: string;
       price: unknown;
+      compareAtPrice?: unknown;
+      discountPercent?: unknown;
       stock: number;
       colorway: string;
       images: { url: string | null }[];
@@ -27,24 +29,39 @@ function toLines(
     variant: {
       id: number;
       price: unknown;
+      compareAtPrice?: unknown;
       stockQuantity: number;
       image: string | null;
       attributeValues: { attributeValue: { value: string; attribute: { sortOrder: number } } }[];
     } | null;
   }[]
 ) {
-  return items.map((item) => ({
-    productId: item.product.id,
-    variantId: item.variantId,
-    variantLabel: variantLabel(item.variant),
-    name: item.product.name,
-    slug: item.product.slug,
-    price: Number(item.variant?.price ?? item.product.price),
-    image: item.variant?.image ?? item.product.images[0]?.url ?? null,
-    colorway: item.product.colorway,
-    stock: item.variant ? item.variant.stockQuantity : item.product.stock,
-    quantity: item.quantity,
-  }));
+  return items.map((item) => {
+    const price = Number(item.variant?.price ?? item.product.price);
+    const compareAt = item.variant?.compareAtPrice ?? item.product.compareAtPrice;
+    const compareAtPrice = compareAt != null ? Number(compareAt) : null;
+    const discountPercent =
+      (item.product as any).discountPercent != null
+        ? Number((item.product as any).discountPercent)
+        : compareAtPrice && compareAtPrice > price
+          ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+          : null;
+
+    return {
+      productId: item.product.id,
+      variantId: item.variantId,
+      variantLabel: variantLabel(item.variant),
+      name: item.product.name,
+      slug: item.product.slug,
+      price,
+      compareAtPrice,
+      discountPercent,
+      image: item.variant?.image ?? item.product.images[0]?.url ?? null,
+      colorway: item.product.colorway,
+      stock: item.variant ? item.variant.stockQuantity : item.product.stock,
+      quantity: item.quantity,
+    };
+  });
 }
 
 const cartItemInclude = {

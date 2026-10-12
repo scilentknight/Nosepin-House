@@ -52,6 +52,8 @@ interface ProductPurchasePanelProps {
   hasDiscount: boolean;
   discountType: string | null;
   discountValue: number | null;
+  discountPercent?: number | null;
+  pricingStrategy?: string;
 
   variantGroups: VariantGroup[];
   variants: VariantOption[];
@@ -77,6 +79,8 @@ export function ProductPurchasePanel({
   hasDiscount,
   discountType,
   discountValue,
+  discountPercent,
+  pricingStrategy,
 
   variantGroups,
   variants,
@@ -401,30 +405,44 @@ export function ProductPurchasePanel({
         </span>
 
         {onSale && (
-          <span className="text-lg text-gray-400 line-through">
-            {formatPrice(effectiveCompareAtPrice!)}
-          </span>
+          <>
+            <span className="text-sm sm:text-base text-gray-400 line-through font-normal">
+              {formatPrice(effectiveCompareAtPrice!)}
+            </span>
+            <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600">
+              {discountPercent ??
+                (discountType === "PERCENTAGE" && discountValue
+                  ? Number(discountValue)
+                  : Math.round(
+                      ((effectiveCompareAtPrice! - effectivePrice) /
+                        effectiveCompareAtPrice!) *
+                        100,
+                    ))}% OFF
+            </span>
+          </>
         )}
       </div>
 
-      {/* CUSTOMER DISCOUNT */}
-
-      {customerDiscount !== null && (
-        <div className="mt-2">
-          <span className="text-xs font-medium text-green-600">
-            {customerDiscount}% customer discount applied
+      {onSale && effectiveCompareAtPrice! > effectivePrice && (
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-xs font-medium text-rose-600">
+            {discountPercent ??
+              (discountType === "PERCENTAGE" && discountValue
+                ? Number(discountValue)
+                : Math.round(
+                    ((effectiveCompareAtPrice! - effectivePrice) /
+                      effectiveCompareAtPrice!) *
+                      100,
+                  ))}% OFF · You save {formatPrice(effectiveCompareAtPrice! - effectivePrice)}
           </span>
         </div>
       )}
 
-      {/* PRODUCT DISCOUNT */}
-
-      {hasDiscount && discountValue !== null && discountValue > 0 && (
+      {/* CUSTOMER DISCOUNT */}
+      {customerDiscount !== null && (
         <div className="mt-2">
-          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
-            {discountType === "PERCENTAGE"
-              ? `${discountValue}% OFF`
-              : `Discount ${formatPrice(discountValue)}`}
+          <span className="text-xs font-medium text-green-600">
+            {customerDiscount}% customer discount applied
           </span>
         </div>
       )}

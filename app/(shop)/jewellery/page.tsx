@@ -859,6 +859,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       compareAtPrice: p.compareAtPrice
                         ? Number(p.compareAtPrice)
                         : null,
+                      discountPercent:
+                        (p as any).discountPercent != null
+                          ? Number((p as any).discountPercent)
+                          : null,
+                      pricingStrategy: (p as any).pricingStrategy ?? undefined,
                       colorway: p.colorway,
                       stock: p.stock,
                       image: p.featuredImage ?? p.images[0]?.url ?? null,

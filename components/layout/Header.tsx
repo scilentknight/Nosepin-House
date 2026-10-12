@@ -55,6 +55,8 @@ type ProductSuggestion = {
   name: string;
   slug: string;
   price: number;
+  compareAtPrice?: number | null;
+  discountPercent?: number | null;
   featuredImage: string | null;
 };
 
@@ -590,9 +592,26 @@ function SearchBox({
                       {product.name}
                     </p>
 
-                    <p className="mt-0.5 text-xs text-primary-600">
-                      {formatPrice(product.price)}
-                    </p>
+                    <div className="mt-0.5 flex flex-wrap items-baseline gap-1.5">
+                      <span className="text-xs font-bold text-primary-600">
+                        {formatPrice(product.price)}
+                      </span>
+                      {product.compareAtPrice && product.compareAtPrice > product.price && (
+                        <>
+                          <span className="text-[11px] text-gray-400 line-through">
+                            {formatPrice(product.compareAtPrice)}
+                          </span>
+                          <span className="rounded bg-rose-50 px-1 py-0.2 text-[10px] font-bold text-rose-600">
+                            {product.discountPercent ??
+                              Math.round(
+                                ((product.compareAtPrice - product.price) /
+                                  product.compareAtPrice) *
+                                  100,
+                              )}% OFF
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </button>
               ))}

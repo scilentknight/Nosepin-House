@@ -23,6 +23,7 @@ export async function GET(request: Request) {
       const materials = await prisma.material.findMany({
         where: {
           isActive: true,
+          type: "PRECIOUS_METAL",
           ...(materialId ? { id: materialId } : {}),
         },
         include: {
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
     // Rate history mode
     const where: any = {
       status: "ACTIVE",
+      material: { type: "PRECIOUS_METAL" },
     };
     if (materialId) where.materialId = materialId;
 
@@ -117,6 +119,13 @@ export async function POST(request: Request) {
 
     if (!material) {
       return fail(404, "Material not found");
+    }
+
+    if (material.type !== "PRECIOUS_METAL") {
+      return fail(
+        400,
+        "Rates can only be configured for precious metals (Gold, Silver, etc.). Non-precious materials (Diamond, Gemstones) use direct gross pricing in products."
+      );
     }
 
     // Validate purity exists and belongs to material

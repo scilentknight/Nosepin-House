@@ -53,7 +53,21 @@ export default function WishlistPage() {
                   {line.name}
                 </Link>
                 {line.variantLabel && <p className="text-xs text-gray-500">{line.variantLabel}</p>}
-                <p className="mt-1 text-sm text-gray-500">{formatPrice(line.price)}</p>
+                <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-primary-700">{formatPrice(line.price)}</span>
+                  {line.compareAtPrice && line.compareAtPrice > line.price && (
+                    <>
+                      <span className="text-xs text-gray-400 line-through font-normal">
+                        {formatPrice(line.compareAtPrice)}
+                      </span>
+                      {line.discountPercent && (
+                        <span className="rounded bg-rose-50 px-1 py-0.5 text-[10px] font-semibold text-rose-600">
+                          {line.discountPercent}% OFF
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -62,7 +76,21 @@ export default function WishlistPage() {
                 {line.name}
               </Link>
               {line.variantLabel && <p className="text-xs text-gray-500">{line.variantLabel}</p>}
-              <p className="mt-1 text-sm text-gray-500">{formatPrice(line.price)}</p>
+              <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-sm font-semibold text-primary-700">{formatPrice(line.price)}</span>
+                {line.compareAtPrice && line.compareAtPrice > line.price && (
+                  <>
+                    <span className="text-xs text-gray-400 line-through font-normal">
+                      {formatPrice(line.compareAtPrice)}
+                    </span>
+                    {line.discountPercent && (
+                      <span className="rounded bg-rose-50 px-1 py-0.5 text-[10px] font-semibold text-rose-600">
+                        {line.discountPercent}% OFF
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
               {line.stock <= 0 && <p className="mt-1 text-xs font-medium text-red-600">Out of stock</p>}
             </div>
 

@@ -16,6 +16,7 @@ export async function recalculateAffectedProducts(
    */
   const products = await prisma.product.findMany({
     where: {
+      pricingStrategy: "RATE_BASED",
       materials: {
         some: {
           OR: [

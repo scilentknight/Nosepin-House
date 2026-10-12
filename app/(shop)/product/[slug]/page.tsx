@@ -566,6 +566,7 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { StarRating } from "@/components/ui/StarRating";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
 import { ProductDetailTabs } from "@/components/product/ProductDetailTabs";
+import { getCurrentMaterialRate } from "@/lib/jewellery/calculate-product-price";
 
 import { formatDate } from "@/lib/format";
 
@@ -850,6 +851,69 @@ export default async function ProductPage({
   ];
 
   // ============================================================
+  // MATERIAL DETAILS WITH RATES
+  // ============================================================
+
+  const materialsWithRates = await Promise.all(
+    product.materials.map(async (item) => {
+      let rate: number | null = null;
+      let rateUnit: string | null = null;
+
+      if (item.material.type === "PRECIOUS_METAL") {
+        try {
+          const rateRes = await getCurrentMaterialRate(item.materialId, item.purityId);
+          if (rateRes) {
+            rate = Number(rateRes.rate);
+            rateUnit = rateRes.unit;
+          }
+        } catch {
+          // Graceful fallback
+        }
+      }
+
+      return {
+        id: item.id,
+        material: {
+          name: item.material.name,
+          code: item.material.code,
+          type: item.material.type,
+        },
+        purity: item.purity
+          ? {
+              name: item.purity.name,
+              code: item.purity.code,
+            }
+          : null,
+        stoneMaterial: (item as any).stoneMaterial
+          ? {
+              name: (item as any).stoneMaterial.name,
+              code: (item as any).stoneMaterial.code,
+              unit: (item as any).stoneMaterial.unit,
+            }
+          : null,
+        grossWeight:
+          item.grossWeight !== null ? Number(item.grossWeight) : null,
+        stoneWeight:
+          item.stoneWeight !== null ? Number(item.stoneWeight) : null,
+        stoneGrossPrice:
+          item.stoneGrossPrice !== null ? Number(item.stoneGrossPrice) : null,
+        stoneDiscountPercent: item.stoneDiscountPercent ?? null,
+        manualGrossPrice:
+          item.manualGrossPrice !== null ? Number(item.manualGrossPrice) : null,
+        manualDiscountPercent: item.manualDiscountPercent ?? null,
+        netWeight:
+          item.netWeight !== null ? Number(item.netWeight) : null,
+        quantity: Number(item.quantity),
+        unit: item.unit,
+        wastagePercent:
+          item.wastagePercent !== null ? Number(item.wastagePercent) : null,
+        rate,
+        rateUnit,
+      };
+    })
+  );
+
+  // ============================================================
   // RENDER
   // ============================================================
 
@@ -1006,6 +1070,8 @@ export default async function ProductPage({
                   ? Number(product.discountValue)
                   : null
               }
+              discountPercent={product.discountPercent ?? null}
+              pricingStrategy={product.pricingStrategy}
               variantGroups={variantGroups}
               variants={variantOptions}
               initialSelected={initialSelected}
@@ -1024,44 +1090,10 @@ export default async function ProductPage({
             colorway={product.colorway}
             stock={product.stock}
             stockStatus={product.stockStatus}
-            materials={product.materials.map((item) => ({
-              id: item.id,
-
-              material: {
-                name: item.material.name,
-                code: item.material.code,
-              },
-
-              purity: item.purity
-                ? {
-                    name: item.purity.name,
-                    code: item.purity.code,
-                  }
-                : null,
-
-              stoneMaterial: (item as any).stoneMaterial
-                ? {
-                    name: (item as any).stoneMaterial.name,
-                    code: (item as any).stoneMaterial.code,
-                    unit: (item as any).stoneMaterial.unit,
-                  }
-                : null,
-
-              grossWeight:
-                item.grossWeight !== null ? Number(item.grossWeight) : null,
-              stoneWeight:
-                item.stoneWeight !== null ? Number(item.stoneWeight) : null,
-              netWeight:
-                item.netWeight !== null ? Number(item.netWeight) : null,
-              quantity: Number(item.quantity),
-
-              unit: item.unit,
-
-              wastagePercent:
-                item.wastagePercent !== null
-                  ? Number(item.wastagePercent)
-                  : null,
-            }))}
+            grossPrice={product.compareAtPrice !== null ? Number(product.compareAtPrice) : null}
+            discountPercent={product.discountPercent ?? null}
+            sellingPrice={basePrice}
+            materials={materialsWithRates}
             labourCharge={Number(product.labourCharge)}
             makingCharge={Number(product.makingCharge)}
             otherCharge={Number(product.otherCharge)}

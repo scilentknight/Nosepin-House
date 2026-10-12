@@ -28,6 +28,8 @@ function toProductDTO(
     costPrice: unknown;
     price: unknown;
     compareAtPrice: unknown;
+    pricingStrategy?: string;
+    discountPercent?: unknown;
 
     discountType: string | null;
     discountValue: unknown;
@@ -235,6 +237,9 @@ function toProductDTO(
     price: Number(product.price),
 
     compareAtPrice: decimalToNumber(product.compareAtPrice),
+    grossPrice: decimalToNumber(product.compareAtPrice),
+    pricingStrategy: product.pricingStrategy ?? "RATE_BASED",
+    discountPercent: decimalToNumber(product.discountPercent),
 
     discountType: product.discountType,
 

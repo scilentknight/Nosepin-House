@@ -87,6 +87,12 @@ export default function CartPage() {
     );
   }
 
+  const selectedGrossTotal = selectedLines.reduce((sum, line) => {
+    const gross = line.compareAtPrice && line.compareAtPrice > line.price ? line.compareAtPrice : line.price;
+    return sum + gross * line.quantity;
+  }, 0);
+  const selectedSavings = selectedGrossTotal > selectedSubtotal ? selectedGrossTotal - selectedSubtotal : 0;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -177,9 +183,23 @@ export default function CartPage() {
                       </p>
                     )}
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      {formatPrice(line.price)}
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatPrice(line.price)}
+                      </span>
+                      {line.compareAtPrice && line.compareAtPrice > line.price && (
+                        <>
+                          <span className="text-xs text-gray-400 line-through">
+                            {formatPrice(line.compareAtPrice)}
+                          </span>
+                          {line.discountPercent && (
+                            <span className="rounded bg-rose-50 px-1 py-0.5 text-[10px] font-bold text-rose-600">
+                              {line.discountPercent}% OFF
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -196,9 +216,23 @@ export default function CartPage() {
                     <p className="text-xs text-gray-500">{line.variantLabel}</p>
                   )}
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    {formatPrice(line.price)}
-                  </p>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatPrice(line.price)}
+                    </span>
+                    {line.compareAtPrice && line.compareAtPrice > line.price && (
+                      <>
+                        <span className="text-xs text-gray-400 line-through">
+                          {formatPrice(line.compareAtPrice)}
+                        </span>
+                        {line.discountPercent && (
+                          <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">
+                            {line.discountPercent}% OFF
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* QUANTITY + PRICE + REMOVE */}
@@ -242,9 +276,16 @@ export default function CartPage() {
                     </button>
                   </div>
 
-                  <p className="w-24 shrink-0 text-right font-semibold text-primary-700">
-                    {formatPrice(line.price * line.quantity)}
-                  </p>
+                  <div className="w-28 shrink-0 text-right">
+                    <p className="font-semibold text-primary-700">
+                      {formatPrice(line.price * line.quantity)}
+                    </p>
+                    {line.compareAtPrice && line.compareAtPrice > line.price && (
+                      <p className="text-xs text-gray-400 line-through">
+                        {formatPrice(line.compareAtPrice * line.quantity)}
+                      </p>
+                    )}
+                  </div>
 
                   <button
                     onClick={() => removeItem(line.productId, line.variantId)}
@@ -270,41 +311,70 @@ export default function CartPage() {
 
           {/* SELECTED PRODUCTS */}
           <div className="mt-4 space-y-3">
-            {selectedLines.map((line) => (
-              <div
-                key={`${line.productId}-${line.variantId ?? "base"}`}
-                className="flex items-center gap-3"
-              >
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-100">
-                  <ProductImage
-                    src={line.image}
-                    alt={line.name}
-                    colorway={line.colorway}
-                  />
-                </div>
+            {selectedLines.map((line) => {
+              const onSale = line.compareAtPrice != null && line.compareAtPrice > line.price;
+              return (
+                <div
+                  key={`${line.productId}-${line.variantId ?? "base"}`}
+                  className="flex items-center gap-3"
+                >
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-100">
+                    <ProductImage
+                      src={line.image}
+                      alt={line.name}
+                      colorway={line.colorway}
+                    />
+                  </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-gray-800">
-                    {line.name}
-                  </p>
-
-                  {line.variantLabel && (
-                    <p className="truncate text-[11px] text-gray-400">
-                      {line.variantLabel}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-gray-800">
+                      {line.name}
                     </p>
-                  )}
 
-                  <p className="text-xs text-gray-500">
-                    {line.quantity} × {formatPrice(line.price)}
-                  </p>
+                    {line.variantLabel && (
+                      <p className="truncate text-[11px] text-gray-400">
+                        {line.variantLabel}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap items-baseline gap-1 text-xs text-gray-500">
+                      <span>{line.quantity} × {formatPrice(line.price)}</span>
+                      {onSale && (
+                        <span className="text-[11px] text-gray-400 line-through">
+                          {formatPrice(line.compareAtPrice!)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs font-semibold text-gray-800">
+                      {formatPrice(line.price * line.quantity)}
+                    </p>
+                    {onSale && (
+                      <p className="text-[10px] text-gray-400 line-through">
+                        {formatPrice(line.compareAtPrice! * line.quantity)}
+                      </p>
+                    )}
+                  </div>
                 </div>
-
-                <p className="shrink-0 text-xs font-semibold text-gray-800">
-                  {formatPrice(line.price * line.quantity)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {/* TOTAL SAVINGS BREAKDOWN */}
+          {selectedSavings > 0 && (
+            <div className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-xs">
+              <div className="flex justify-between text-gray-500">
+                <span>Original MRP Total</span>
+                <span className="line-through">{formatPrice(selectedGrossTotal)}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-rose-600">
+                <span>Total Savings</span>
+                <span>− {formatPrice(selectedSavings)}</span>
+              </div>
+            </div>
+          )}
 
           <div className="my-4 border-t border-gray-100" />
 

@@ -35,6 +35,9 @@ export interface ProductFormValues {
   costPrice: string;
   price: string;
   compareAtPrice: string;
+  grossPrice: string;
+  pricingStrategy: "RATE_BASED" | "MANUAL_DISCOUNT";
+  discountPercent: number | "";
 
   discountType: "PERCENTAGE" | "FIXED" | "";
   discountValue: string;
@@ -107,6 +110,9 @@ export const EMPTY_PRODUCT: ProductFormValues = {
   costPrice: "",
   price: "",
   compareAtPrice: "",
+  grossPrice: "",
+  pricingStrategy: "RATE_BASED",
+  discountPercent: 40,
 
   discountType: "",
   discountValue: "",
@@ -230,23 +236,40 @@ type Tab = (typeof TABS)[number];
 function toPayload(values: ProductFormValues) {
   const num = (value: string) => (value.trim() === "" ? null : Number(value));
 
+  const isManual = values.pricingStrategy === "MANUAL_DISCOUNT";
+  const grossNum = num(values.grossPrice || values.compareAtPrice);
+  const discountNum =
+    values.discountPercent !== "" && values.discountPercent !== undefined
+      ? Number(values.discountPercent)
+      : 40;
+
+  let finalSellingPrice = num(values.price);
+  if (isManual && grossNum !== null && grossNum > 0) {
+    finalSellingPrice =
+      Math.round(grossNum * (1 - discountNum / 100) * 100) / 100;
+  }
+
   return {
     ...values,
+
+    pricingStrategy: values.pricingStrategy || "RATE_BASED",
+    grossPrice: grossNum,
+    discountPercent: isManual ? discountNum : null,
 
     // The gallery's first image is the listing image unless explicitly overridden.
     featuredImage: values.featuredImage || values.images[0]?.url || null,
 
     brandId: values.brandId || null,
 
-    costPrice: num(values.costPrice),
+    costPrice: isManual ? grossNum : num(values.costPrice),
 
-    price: num(values.price),
+    price: finalSellingPrice,
 
-    compareAtPrice: num(values.compareAtPrice),
+    compareAtPrice: isManual ? grossNum : num(values.compareAtPrice),
 
-    discountType: values.discountType || null,
+    discountType: isManual ? "PERCENTAGE" : values.discountType || null,
 
-    discountValue: num(values.discountValue),
+    discountValue: isManual ? discountNum : num(values.discountValue),
 
     stock: num(values.stock) ?? 0,
 
@@ -297,11 +320,29 @@ function toPayload(values: ProductFormValues) {
           material.stoneWeight && material.stoneWeight.trim() !== ""
             ? Number(material.stoneWeight)
             : null,
+        stoneGrossPrice:
+          material.stoneGrossPrice && material.stoneGrossPrice.trim() !== ""
+            ? Number(material.stoneGrossPrice)
+            : null,
+        stoneDiscountPercent:
+          material.stoneDiscountPercent &&
+          material.stoneDiscountPercent.trim() !== ""
+            ? Number(material.stoneDiscountPercent)
+            : null,
+        manualGrossPrice:
+          material.manualGrossPrice && material.manualGrossPrice.trim() !== ""
+            ? Number(material.manualGrossPrice)
+            : null,
+        manualDiscountPercent:
+          material.manualDiscountPercent &&
+          material.manualDiscountPercent.trim() !== ""
+            ? Number(material.manualDiscountPercent)
+            : null,
         netWeight:
           material.netWeight && material.netWeight.trim() !== ""
             ? Number(material.netWeight)
             : null,
-        quantity: Number(material.quantity || material.netWeight || 0),
+        quantity: Number(material.quantity || material.netWeight || 1),
         unit: material.unit,
         wastagePercent:
           material.wastagePercent && material.wastagePercent.trim() !== ""

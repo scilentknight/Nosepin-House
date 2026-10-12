@@ -33,6 +33,10 @@ export interface ProductMaterialValue {
   grossWeight?: string;
   stoneMaterialId?: string;
   stoneWeight?: string;
+  stoneGrossPrice?: string;
+  stoneDiscountPercent?: string;
+  manualGrossPrice?: string;
+  manualDiscountPercent?: string;
   netWeight?: string;
   quantity: string;
   unit: MaterialUnit;

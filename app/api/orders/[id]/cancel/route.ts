@@ -38,7 +38,7 @@ export async function POST(
             where: { id: item.variantId },
             data: { stockQuantity: { increment: item.quantity } },
           });
-        } else {
+        } else if (item.productId) {
           await tx.product.update({
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },

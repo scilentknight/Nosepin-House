@@ -11,18 +11,37 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
     const existing = await prisma.product.findUnique({
       where: { id },
-      include: { _count: { select: { orderItems: true, cartItems: true } } },
     });
     if (!existing) return fail(404, "Product not found");
-    if (!existing.deletedAt) return fail(400, "Product must be trashed before it can be permanently deleted");
-    if (existing._count.orderItems > 0) {
-      return fail(400, "Cannot permanently delete a product referenced by existing orders");
-    }
 
-    await prisma.$transaction([
-      prisma.cartItem.deleteMany({ where: { productId: id } }),
-      prisma.product.delete({ where: { id } }),
-    ]);
+    await prisma.$transaction(async (tx) => {
+      await tx.orderItem.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+      await tx.cartItem.deleteMany({ where: { productId: id } });
+      await tx.wishlistItem.deleteMany({ where: { productId: id } });
+      await tx.review.deleteMany({ where: { productId: id } });
+      await tx.productRelation.deleteMany({
+        where: { OR: [{ productId: id }, { relatedId: id }] },
+      });
+      const variants = await tx.productVariant.findMany({
+        where: { productId: id },
+        select: { id: true },
+      });
+      const variantIds = variants.map((v) => v.id);
+      if (variantIds.length > 0) {
+        await tx.productVariantValue.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+        await tx.productVariant.deleteMany({
+          where: { id: { in: variantIds } },
+        });
+      }
+      await tx.productMaterial.deleteMany({ where: { productId: id } });
+      await tx.productImage.deleteMany({ where: { productId: id } });
+      await tx.product.delete({ where: { id } });
+    });
 
     return ok(null, "Product permanently deleted");
   } catch (error) {
