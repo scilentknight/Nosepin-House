@@ -21,6 +21,14 @@ function toLines(
       price: unknown;
       compareAtPrice?: unknown;
       discountPercent?: unknown;
+      markupType?: string | null;
+      markupValue?: unknown;
+      materials?: {
+        stoneGrossPrice?: unknown;
+        stoneDiscountPercent?: unknown;
+        manualGrossPrice?: unknown;
+        manualDiscountPercent?: unknown;
+      }[];
       stock: number;
       colorway: string;
       images: { url: string | null }[];
@@ -31,13 +39,16 @@ function toLines(
       compareAtPrice?: unknown;
       stockQuantity: number;
       image: string | null;
-      attributeValues: { attributeValue: { value: string; attribute: { sortOrder: number } } }[];
+      attributeValues: {
+        attributeValue: { value: string; attribute: { sortOrder: number } };
+      }[];
     } | null;
-  }[]
+  }[],
 ) {
   return items.map((item) => {
     const price = Number(item.variant?.price ?? item.product.price);
-    const compareAt = item.variant?.compareAtPrice ?? item.product.compareAtPrice;
+    const compareAt =
+      item.variant?.compareAtPrice ?? item.product.compareAtPrice;
     const compareAtPrice = compareAt != null ? Number(compareAt) : null;
     const discountPercent =
       (item.product as any).discountPercent != null
@@ -64,7 +75,13 @@ function toLines(
 
 const wishlistItemInclude = {
   product: { include: { images: { take: 1 as const } } },
-  variant: { include: { attributeValues: { include: { attributeValue: { include: { attribute: true } } } } } },
+  variant: {
+    include: {
+      attributeValues: {
+        include: { attributeValue: { include: { attribute: true } } },
+      },
+    },
+  },
 };
 
 async function getWishlistLines(userId: number) {
@@ -91,9 +108,14 @@ export async function POST(request: Request) {
     const user = await requireUser();
     const body = await request.json();
     const productId = Number(body.productId);
-    const variantId = body.variantId !== undefined && body.variantId !== null ? Number(body.variantId) : null;
-    if (!body.productId || Number.isNaN(productId)) return fail(400, "productId is required");
-    if (variantId !== null && Number.isNaN(variantId)) return fail(400, "Invalid variantId");
+    const variantId =
+      body.variantId !== undefined && body.variantId !== null
+        ? Number(body.variantId)
+        : null;
+    if (!body.productId || Number.isNaN(productId))
+      return fail(400, "productId is required");
+    if (variantId !== null && Number.isNaN(variantId))
+      return fail(400, "Invalid variantId");
 
     const product = await prisma.product.findFirst({
       where: { id: productId, status: "PUBLISHED", deletedAt: null },
@@ -137,9 +159,13 @@ export async function DELETE(request: Request) {
     const wishlist = await getOrCreateWishlist(user.id);
 
     if (productId !== null && !Number.isNaN(productId)) {
-      await prisma.wishlistItem.deleteMany({ where: { wishlistId: wishlist.id, productId, variantId } });
+      await prisma.wishlistItem.deleteMany({
+        where: { wishlistId: wishlist.id, productId, variantId },
+      });
     } else {
-      await prisma.wishlistItem.deleteMany({ where: { wishlistId: wishlist.id } });
+      await prisma.wishlistItem.deleteMany({
+        where: { wishlistId: wishlist.id },
+      });
     }
 
     return ok(await getWishlistLines(user.id));

@@ -417,7 +417,8 @@ export function ProductPurchasePanel({
                       ((effectiveCompareAtPrice! - effectivePrice) /
                         effectiveCompareAtPrice!) *
                         100,
-                    ))}% OFF
+                    ))}
+              % OFF
             </span>
           </>
         )}
@@ -433,7 +434,9 @@ export function ProductPurchasePanel({
                     ((effectiveCompareAtPrice! - effectivePrice) /
                       effectiveCompareAtPrice!) *
                       100,
-                  ))}% OFF · You save {formatPrice(effectiveCompareAtPrice! - effectivePrice)}
+                  ))}
+            % OFF · You save{" "}
+            {formatPrice(effectiveCompareAtPrice! - effectivePrice)}
           </span>
         </div>
       )}
