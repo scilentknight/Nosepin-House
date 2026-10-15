@@ -1,0 +1,208 @@
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
+import { ok, fail, handleApiError } from "@/lib/api";
+import { parsePagination } from "@/lib/admin-query";
+import { ensureUniqueSlug } from "@/lib/slug";
+import { generateSku } from "@/lib/sku";
+import { syncRelations } from "@/lib/product-relations";
+import { productSchema } from "@/schemas/admin-product";
+import { calculateProductPrice } from "@/lib/jewellery/calculate-product-price";
+import { calculateManualSellingPrice } from "@/lib/jewellery/manual-pricing";
+export async function GET(request) {
+    try {
+        await requireAdmin();
+        const { searchParams } = new URL(request.url);
+        const search = searchParams.get("search")?.trim();
+        const categoryIdParam = searchParams.get("categoryId");
+        const brandIdParam = searchParams.get("brandId");
+        const categoryId = categoryIdParam && !Number.isNaN(Number(categoryIdParam)) ? Number(categoryIdParam) : undefined;
+        const brandId = brandIdParam && !Number.isNaN(Number(brandIdParam)) ? Number(brandIdParam) : undefined;
+        const status = searchParams.get("status");
+        const stockStatus = searchParams.get("stockStatus");
+        const featured = searchParams.get("featured");
+        const trashed = searchParams.get("trashed") === "true";
+        const { page, pageSize, skip } = parsePagination(searchParams);
+        const where = {
+            deletedAt: trashed ? { not: null } : null,
+            ...(categoryId ? { categoryId } : {}),
+            ...(brandId ? { brandId } : {}),
+            ...(status ? { status: status } : {}),
+            ...(stockStatus ? { stockStatus: stockStatus } : {}),
+            ...(featured === "true" ? { isFeatured: true } : {}),
+            ...(search ? { OR: [{ name: { contains: search } }, { sku: { contains: search } }] } : {}),
+        };
+        const [products, total] = await Promise.all([
+            prisma.product.findMany({
+                where,
+                orderBy: { createdAt: "desc" },
+                include: {
+                    category: { select: { id: true, name: true } },
+                    brand: { select: { id: true, name: true } },
+                    images: { take: 1, orderBy: { sortOrder: "asc" } },
+                    materials: { include: { material: true, purity: true, stoneMaterial: true } },
+                    _count: { select: { variants: true } },
+                },
+                skip,
+                take: pageSize,
+            }),
+            prisma.product.count({ where }),
+        ]);
+        const data = products.map((p) => ({
+            ...p,
+            price: Number(p.price),
+            costPrice: p.costPrice ? Number(p.costPrice) : null,
+            compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+            grossPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+            pricingStrategy: p.pricingStrategy,
+            discountPercent: p.discountPercent,
+            labourCharge: Number(p.labourCharge),
+            makingCharge: Number(p.makingCharge),
+            otherCharge: Number(p.otherCharge),
+            markupValue: p.markupValue ? Number(p.markupValue) : null,
+        }));
+        return ok({ products: data, total, page, pageSize });
+    }
+    catch (error) {
+        return handleApiError(error);
+    }
+}
+export async function POST(request) {
+    try {
+        await requireAdmin();
+        const body = await request.json();
+        const parsed = productSchema.safeParse(body);
+        if (!parsed.success)
+            return fail(400, parsed.error.issues[0]?.message ?? "Invalid request");
+        const data = parsed.data;
+        const slug = await ensureUniqueSlug(prisma.product, data.slug || data.name);
+        const sku = data.sku?.trim() || generateSku(data.name);
+        let finalPrice = data.price ?? 0;
+        let finalCostPrice = data.costPrice ?? null;
+        let finalCompareAtPrice = data.compareAtPrice ?? null;
+        let finalDiscountType = data.discountType ?? null;
+        let finalDiscountValue = data.discountValue ?? null;
+        let finalDiscountPercent = null;
+        let finalHasDiscount = data.hasDiscount ?? false;
+        let finalIsOnSale = data.isOnSale ?? false;
+        let pricingUpdatedAt = null;
+        if (data.pricingStrategy === "MANUAL_DISCOUNT") {
+            const grossPrice = Number(data.grossPrice ?? data.compareAtPrice);
+            const discountPercent = Number(data.discountPercent ?? 40);
+            const calc = calculateManualSellingPrice(grossPrice, discountPercent);
+            finalPrice = calc.sellingPrice;
+            finalCompareAtPrice = calc.grossPrice;
+            finalCostPrice = calc.grossPrice;
+            finalDiscountPercent = discountPercent;
+            finalDiscountType = "PERCENTAGE";
+            finalDiscountValue = discountPercent;
+            finalHasDiscount = true;
+            finalIsOnSale = true;
+            pricingUpdatedAt = new Date();
+        }
+        else if (data.materials && data.materials.length > 0) {
+            const jewelleryPricing = await calculateProductPrice(data.materials.map((m) => ({
+                materialId: m.materialId,
+                purityId: m.purityId,
+                grossWeight: m.grossWeight,
+                stoneMaterialId: m.stoneMaterialId,
+                stoneWeight: m.stoneWeight,
+                stoneGrossPrice: m.stoneGrossPrice,
+                stoneDiscountPercent: m.stoneDiscountPercent,
+                manualGrossPrice: m.manualGrossPrice,
+                manualDiscountPercent: m.manualDiscountPercent,
+                netWeight: m.netWeight,
+                quantity: m.quantity,
+                unit: m.unit,
+                wastagePercent: m.wastagePercent ?? 0,
+            })), data.labourCharge ?? 0, data.makingCharge ?? 0, data.otherCharge ?? 0, data.markupType ?? "", data.markupValue ?? 0);
+            finalPrice = jewelleryPricing.sellingPrice;
+            finalCostPrice = jewelleryPricing.subtotal;
+            pricingUpdatedAt = new Date();
+        }
+        const product = await prisma.$transaction(async (tx) => {
+            const created = await tx.product.create({
+                data: {
+                    name: data.name,
+                    slug,
+                    sku,
+                    categoryId: data.categoryId,
+                    brandId: data.brandId || null,
+                    shortDescription: data.shortDescription || null,
+                    fullDescription: data.fullDescription,
+                    pricingStrategy: data.pricingStrategy,
+                    discountPercent: finalDiscountPercent,
+                    costPrice: finalCostPrice,
+                    price: finalPrice,
+                    compareAtPrice: finalCompareAtPrice,
+                    discountType: finalDiscountType,
+                    discountValue: finalDiscountValue,
+                    hasDiscount: finalHasDiscount,
+                    taxClass: data.taxClass || null,
+                    stock: data.stock,
+                    lowStockAlert: data.lowStockAlert ?? null,
+                    stockStatus: data.stockStatus,
+                    minimumOrderQuantity: data.minimumOrderQuantity,
+                    maximumOrderQuantity: data.maximumOrderQuantity ?? null,
+                    weight: data.weight ?? null,
+                    length: data.length ?? null,
+                    width: data.width ?? null,
+                    height: data.height ?? null,
+                    featuredImage: data.featuredImage || data.images[0]?.url || null,
+                    isFeatured: data.isFeatured,
+                    isBestSeller: data.isBestSeller,
+                    isNewArrival: data.isNewArrival,
+                    isOnSale: finalIsOnSale,
+                    isTrending: data.isTrending,
+                    isSpecial: data.isSpecial,
+                    isWeekly: data.isWeekly,
+                    isFlash: data.isFlash,
+                    metaTitle: data.metaTitle || null,
+                    metaDescription: data.metaDescription || null,
+                    metaKeywords: data.metaKeywords || null,
+                    warranty: data.warranty || null,
+                    tags: data.tags,
+                    colorway: data.colorway,
+                    status: data.status,
+                    publishedAt: data.status === "PUBLISHED" ? new Date() : null,
+                    labourCharge: data.labourCharge ?? 0,
+                    makingCharge: data.makingCharge ?? 0,
+                    otherCharge: data.otherCharge ?? 0,
+                    markupType: data.markupType ?? null,
+                    markupValue: data.markupValue ?? null,
+                    pricingUpdatedAt,
+                    materials: {
+                        create: data.materials.map((m, i) => ({
+                            materialId: m.materialId,
+                            purityId: m.purityId && m.purityId.trim() !== "" ? m.purityId : null,
+                            grossWeight: m.grossWeight !== null && m.grossWeight !== undefined ? m.grossWeight : null,
+                            stoneMaterialId: m.stoneMaterialId && m.stoneMaterialId.trim() !== "" ? m.stoneMaterialId : null,
+                            stoneWeight: m.stoneWeight !== null && m.stoneWeight !== undefined ? m.stoneWeight : null,
+                            stoneGrossPrice: m.stoneGrossPrice !== null && m.stoneGrossPrice !== undefined ? m.stoneGrossPrice : null,
+                            stoneDiscountPercent: m.stoneDiscountPercent !== null && m.stoneDiscountPercent !== undefined ? m.stoneDiscountPercent : null,
+                            manualGrossPrice: m.manualGrossPrice !== null && m.manualGrossPrice !== undefined ? m.manualGrossPrice : null,
+                            manualDiscountPercent: m.manualDiscountPercent !== null && m.manualDiscountPercent !== undefined ? m.manualDiscountPercent : null,
+                            netWeight: m.netWeight !== null && m.netWeight !== undefined ? m.netWeight : null,
+                            quantity: m.quantity,
+                            unit: m.unit,
+                            wastagePercent: m.wastagePercent ?? 0,
+                            sortOrder: m.sortOrder ?? i,
+                        })),
+                    },
+                    images: {
+                        create: data.images.map((img, i) => ({ url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? i })),
+                    },
+                },
+                include: {
+                    materials: { include: { material: true, purity: true, stoneMaterial: true } },
+                    images: true,
+                },
+            });
+            await syncRelations(tx, created.id, data.relatedIds, data.crossSellIds, data.upSellIds);
+            return created;
+        });
+        return ok(product, "Product created");
+    }
+    catch (error) {
+        return handleApiError(error);
+    }
+}
