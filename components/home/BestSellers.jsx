@@ -17,14 +17,15 @@ export default function Bestsellers({ products }) {
               Pieces going out the door
             </h2>
             <p className="mt-2 max-w-xl text-sm text-[#6f625d]">
-              Recent jewellery on the floor — nosepins, earrings, and sets people actually buy.
+              Recent jewellery on the floor — nosepins, earrings, and sets
+              people actually buy.
             </p>
           </div>
           <Link
             href="/jewellery"
             className="shrink-0 text-xs font-medium uppercase tracking-[0.18em] text-[#783f35] underline-offset-4 hover:underline"
           >
-            Full tray
+            View All
           </Link>
         </div>
 
