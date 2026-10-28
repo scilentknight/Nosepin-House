@@ -131,6 +131,24 @@ export async function PUT(request, { params }) {
             })), data.labourCharge ?? 0, data.makingCharge ?? 0, data.otherCharge ?? 0, data.markupType ?? "", data.markupValue ?? 0);
             finalPrice = jewelleryPricing.sellingPrice;
             finalCostPrice = jewelleryPricing.subtotal;
+            if (jewelleryPricing.compareAtPrice) {
+                finalCompareAtPrice = jewelleryPricing.compareAtPrice;
+                finalHasDiscount = true;
+                finalIsOnSale = true;
+                finalDiscountPercent = jewelleryPricing.discountPercent;
+            } else if (data.compareAtPrice && Number(data.compareAtPrice) > finalPrice) {
+                finalCompareAtPrice = Number(data.compareAtPrice);
+                finalHasDiscount = true;
+                finalIsOnSale = true;
+                finalDiscountPercent = Math.round(
+                    ((finalCompareAtPrice - finalPrice) / finalCompareAtPrice) * 100
+                );
+            } else {
+                finalCompareAtPrice = null;
+                finalHasDiscount = false;
+                finalIsOnSale = false;
+                finalDiscountPercent = null;
+            }
             pricingUpdatedAt = new Date();
         }
         const product = await prisma.$transaction(async (tx) => {
